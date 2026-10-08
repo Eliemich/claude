@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr" class="js-intro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Connexion — Trading Bara Mail</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#03050a">
+  <link rel="icon" href="/img/favicon.png" type="image/png">
+  <link rel="preload" href="/img/logo.webp" as="image" type="image/webp">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <link rel="preload" href="/vendor/fonts/unbounded/unbounded-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/vendor/fonts/geist/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/login.css">
+  <script type="module" src="/js/login.js"></script>
+</head>
+<body class="page-login">
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="atmos" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main class="login">
+    <div class="login__brand">
+      <!-- Logo : icône flottante en 3D, halo néon, yeux qui s'allument, reflet qui balaye -->
+      <div class="emblem" data-orb>
+        <span class="emblem__halo" aria-hidden="true"></span>
+        <div class="emblem__icon" data-emblem>
+          <img src="/img/logo.webp" alt="Trading Bara" width="384" height="384" fetchpriority="high">
+          <span class="emblem__eye emblem__eye--l" aria-hidden="true"></span>
+          <span class="emblem__eye emblem__eye--r" aria-hidden="true"></span>
+          <span class="emblem__shine" aria-hidden="true"></span>
+        </div>
+        <span class="emblem__floor" aria-hidden="true"></span>
+      </div>
+      <h1 class="wordmark login__word" data-word>TRADING <b>BARA</b></h1>
+      <p class="login__tag" data-tag><span></span>Mail · Centre d'envoi<span></span></p>
+    </div>
+
+    <section class="login-card glass spot beam" data-card>
+      <!-- Étape 1 : identifiants -->
+      <form data-step="login" novalidate>
+        <p class="eyebrow">Accès sécurisé</p>
+        <h2 class="display login__title">Connexion</h2>
+        <p class="login__intro">Espace réservé à l'équipe Trading Bara.</p>
+        <div class="login__fields">
+          <div class="field"><label for="l-email">Email</label>
+            <input class="input" id="l-email" name="email" type="email" autocomplete="username" placeholder="toi@tradingbara.uk" required></div>
+          <div class="field"><label for="l-pass">Mot de passe</label>
+            <div class="input-wrap">
+              <input class="input" id="l-pass" name="password" type="password" autocomplete="current-password" placeholder="••••••••••" required>
+              <button class="input-btn" type="button" data-toggle-pass aria-label="Afficher le mot de passe"></button>
+            </div></div>
+        </div>
+        <button class="btn btn--primary btn--lg btn--block login__submit" type="submit" data-magnetic><span>Entrer</span><span data-icon="arrow"></span></button>
+      </form>
+
+      <!-- Étape 2a : première connexion, configuration de la double authentification -->
+      <form data-step="setup" novalidate hidden>
+        <p class="eyebrow">Double authentification</p>
+        <h2 class="display login__title">Sécurise ton accès</h2>
+        <ol class="login__steps">
+          <li>Installe une appli d'authentification (Google Authenticator, Authy…).</li>
+          <li>Scanne ce QR code avec l'appli.</li>
+          <li>Saisis le code à 6 chiffres affiché.</li>
+        </ol>
+        <div class="login__qr"><img data-qr alt="QR code de configuration" width="180" height="180"></div>
+        <p class="login__secret">Clé manuelle : <code data-secret></code></p>
+        <div class="field"><label for="l-code1">Code à 6 chiffres</label>
+          <input class="input code-input" id="l-code1" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" required></div>
+        <button class="btn btn--primary btn--lg btn--block" type="submit"><span>Activer et entrer</span></button>
+      </form>
+
+      <!-- Étape 2b : code de l'application -->
+      <form data-step="totp" novalidate hidden>
+        <p class="eyebrow">Vérification</p>
+        <h2 class="display login__title">Code de sécurité</h2>
+        <p class="login__intro">Ouvre ton appli d'authentification et saisis le code à 6 chiffres.</p>
+        <div class="field"><label for="l-code2">Code à 6 chiffres</label>
+          <input class="input code-input" id="l-code2" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" required></div>
+        <button class="btn btn--primary btn--lg btn--block" type="submit"><span>Entrer</span></button>
+      </form>
+
+      <p class="form-error" data-error role="alert"></p>
+      <p class="login-card__foot"><span data-icon="shield"></span>Connexion chiffrée · aucun compte ne se crée ici</p>
+    </section>
+    <footer class="login-legal">Trading Bara · tradingbara.uk</footer>
+  </main>
+</body>
+</html>

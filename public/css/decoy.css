@@ -1,0 +1,141 @@
+/* ==========================================================================
+   Écran de maintenance (décor) servi sur « / ».
+   Volontairement neutre et banal : aucune marque, aucun logo.
+   ========================================================================== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #3a3f45;
+  background: #f4f5f7;
+  background: linear-gradient(180deg, #f7f8fa 0%, #eceef1 100%);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.err { width: 100%; max-width: 540px; }
+.err__card {
+  background: #fff;
+  border: 1px solid #e3e6ea;
+  border-radius: 12px;
+  padding: 40px 38px 34px;
+  box-shadow: 0 1px 2px rgba(20, 28, 40, .04), 0 12px 34px -16px rgba(20, 28, 40, .18);
+  text-align: center;
+}
+.err__code {
+  margin: 0;
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: #c6ccd3;
+  line-height: 1;
+}
+.err__title {
+  margin: 14px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2b3038;
+}
+.err__text {
+  margin: 14px auto 0;
+  max-width: 420px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #656b73;
+}
+.err__bar {
+  height: 4px;
+  margin: 26px 0 22px;
+  border-radius: 999px;
+  background: #eceef1;
+  overflow: hidden;
+}
+.err__bar span {
+  display: block;
+  height: 100%;
+  width: 38%;
+  border-radius: 999px;
+  background: #b9c0c8;
+  animation: slide 1.8s ease-in-out infinite;
+}
+@keyframes slide {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(360%); }
+}
+.err__meta {
+  margin: 0;
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  border: 1px solid #edeff2;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #edeff2;
+}
+.err__meta > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 14px;
+  background: #fbfbfc;
+  font-size: 12.5px;
+}
+.err__meta dt { margin: 0; color: #8a9199; }
+.err__meta dd { margin: 0; color: #3a3f45; font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; }
+
+/* Séquence de points, en haut à droite. Discrets, sans curseur « main ». */
+.sig {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+.sig__dot {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.sig__dot[hidden] { display: none; }   /* sinon display:grid écraserait l'attribut hidden */
+.sig__dot::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.sig__dot--r::after { background: #d23c3c; opacity: .26; }
+.sig__dot--b::after { background: #2f6bff; opacity: .5; }
+.sig__dot--k::after { background: #10131a; opacity: .5; }
+
+/* Disparition : flou + fondu + léger mouvement vers le haut (~1,5 s). */
+body.is-leaving .err,
+body.is-leaving .sig {
+  animation: vanish 1.5s cubic-bezier(.4, 0, .2, 1) forwards;
+  pointer-events: none;
+}
+@keyframes vanish {
+  to {
+    opacity: 0;
+    filter: blur(18px);
+    transform: translateY(-28px) scale(1.015);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .err__bar span { animation: none; }
+  body.is-leaving .err, body.is-leaving .sig { animation-duration: .4s; }
+}
+@media (max-width: 480px) {
+  .err__card { padding: 32px 22px 26px; }
+  .err__code { font-size: 46px; }
+}

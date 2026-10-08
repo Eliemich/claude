@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+npm-debug.log*
+.DS_Store

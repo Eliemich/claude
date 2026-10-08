@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr" class="js-intro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Envoi d'emails — Trading Bara</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#03050a">
+  <link rel="icon" href="/img/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+  <link rel="preload" href="/vendor/fonts/unbounded/unbounded-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/vendor/fonts/geist/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body class="page-app">
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="atmos" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ============ BARRE DU HAUT ============ -->
+  <header class="topbar glass" data-topbar>
+    <a class="brand" href="/envoi" aria-label="Trading Bara — accueil">
+      <span class="brand__logo"><img src="/img/logo.webp" alt="" width="42" height="42"></span>
+      <span class="wordmark brand__word">TRADING <b>BARA</b></span>
+      <span class="brand__badge">Mail</span>
+    </a>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <span class="tabs__glow" data-tab-glow aria-hidden="true"></span>
+      <button class="tab" role="tab" data-tab="envoyer"><span data-icon="send"></span><span class="tab__label">Envoyer</span></button>
+      <button class="tab" role="tab" data-tab="modeles"><span data-icon="layers"></span><span class="tab__label">Modèles</span></button>
+      <button class="tab" role="tab" data-tab="historique"><span data-icon="clock"></span><span class="tab__label">Historique</span></button>
+    </nav>
+    <div class="topbar__right">
+      <span class="status" data-status title=""><span class="dot"></span><span data-status-text>…</span></span>
+      <span class="who"><span class="who__avatar" data-avatar>·</span><span class="who__name" data-user-name></span></span>
+      <button class="btn btn--ghost btn--icon btn--sm" type="button" data-logout title="Se déconnecter" aria-label="Se déconnecter"><span data-icon="logout"></span></button>
+    </div>
+  </header>
+
+  <main class="app">
+
+    <!-- ============ ENVOYER ============ -->
+    <section class="view" data-view="envoyer" role="tabpanel">
+      <div class="hero">
+        <div class="hero__text">
+          <p class="eyebrow" data-reveal>Centre d'envoi</p>
+          <h1 class="display hero__title" data-split>Compose. Vérifie. <span class="grad-text">Envoie.</span></h1>
+          <p class="lead" data-reveal>Choisis un modèle, remplis ses balises : l'aperçu se met à jour en direct, exactement comme le recevra ton destinataire.</p>
+        </div>
+        <div class="stats" data-stats>
+          <article class="stat glass spot" data-reveal><p class="stat__label">Aujourd'hui</p><p class="stat__value" data-stat="aujourdhui">0</p><svg class="spark" data-spark viewBox="0 0 160 38" preserveAspectRatio="none"></svg></article>
+          <article class="stat glass spot" data-reveal><p class="stat__label">7 derniers jours</p><p class="stat__value" data-stat="semaine">0</p><p class="stat__foot" data-stat-foot>emails envoyés</p></article>
+          <article class="stat glass spot" data-reveal><p class="stat__label">Depuis le début</p><p class="stat__value" data-stat="total">0</p><p class="stat__foot"><span data-stat-models>0</span> modèles prêts</p></article>
+        </div>
+      </div>
+
+      <div class="compose">
+        <div class="compose__form">
+          <!-- 01 Modèle -->
+          <section class="panel glass spot" data-reveal>
+            <header class="panel__head">
+              <span class="step">01</span>
+              <div><h2 class="panel__title">Modèle</h2><p class="panel__sub">Le design et l'objet de l'email.</p></div>
+              <a class="btn btn--ghost btn--sm panel__action" href="#modeles"><span data-icon="layers"></span><span>Gérer</span></a>
+            </header>
+            <div class="tpl-grid" data-tpl-grid></div>
+          </section>
+
+          <!-- 02 Destinataire & objet -->
+          <section class="panel glass spot" data-reveal>
+            <header class="panel__head">
+              <span class="step">02</span>
+              <div><h2 class="panel__title">Destinataire &amp; objet</h2><p class="panel__sub">À qui, et l'objet de l'email.</p></div>
+            </header>
+            <div class="stack-fields">
+              <div class="field" data-field="to">
+                <label for="c-to">Adresse email</label>
+                <div class="input-icon"><span data-icon="mail"></span>
+                  <input class="input" id="c-to" name="to" type="email" inputmode="email" autocomplete="off" spellcheck="false" placeholder="prenom@exemple.com"></div>
+              </div>
+              <div class="field" data-field="subject">
+                <label class="var-label" for="c-subject"><span>Objet de l'email</span>
+                  <button type="button" class="linklike" data-subject-reset hidden>↺ objet du modèle</button></label>
+                <div class="input-icon"><span data-icon="quote"></span>
+                  <input class="input" id="c-subject" name="subject" maxlength="200" autocomplete="off" placeholder="Objet de l'email…"></div>
+                <span class="hint">Repris du modèle, modifiable. Les balises <span class="tag">{{…}}</span> sont acceptées.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 03 Balises -->
+          <section class="panel glass spot" data-reveal>
+            <header class="panel__head">
+              <span class="step">03</span>
+              <div><h2 class="panel__title">Balises</h2><p class="panel__sub" data-vars-sub>Les informations à insérer dans le modèle.</p></div>
+              <button class="btn btn--ghost btn--sm panel__action" type="button" data-clear title="Vider les champs"><span data-icon="reset"></span><span>Vider</span></button>
+            </header>
+            <div class="facture-wrap" data-facture hidden></div>
+            <div class="vars" data-vars></div>
+          </section>
+
+          <!-- Envoi -->
+          <div class="sendbar glass" data-reveal>
+            <div class="sendbar__info">
+              <p class="sendbar__state" data-ready>Complète les informations</p>
+              <p class="sendbar__detail" data-ready-detail>—</p>
+            </div>
+            <button class="btn btn--primary btn--lg sendbar__btn" type="button" data-send data-magnetic><span data-icon="send"></span><span>Envoyer</span></button>
+          </div>
+        </div>
+
+        <!-- Aperçu en 3D -->
+        <div class="compose__preview" data-reveal>
+          <div class="stage">
+            <div class="device glass" data-device>
+              <div class="device__chrome">
+                <span class="device__dots"><i></i><i></i><i></i></span>
+                <span class="device__title"><span class="live"></span>Aperçu en direct</span>
+                <span class="seg" role="group" aria-label="Largeur de l'aperçu">
+                  <button type="button" class="seg__btn is-on" data-width="desktop" title="Ordinateur"><span data-icon="desktop"></span></button>
+                  <button type="button" class="seg__btn" data-width="mobile" title="Téléphone"><span data-icon="phone"></span></button>
+                </span>
+                <button type="button" class="device__expand" data-expand title="Agrandir"><span data-icon="expand"></span></button>
+              </div>
+              <div class="mailhead">
+                <span class="mailhead__avatar"><img src="/img/logo.webp" alt="" width="42" height="42"></span>
+                <div class="mailhead__lines">
+                  <p class="mailhead__subject" data-p-subject>—</p>
+                  <p class="mailhead__meta"><strong>Trading Bara</strong> <span data-p-from></span></p>
+                  <p class="mailhead__meta">À : <span data-p-to>—</span></p>
+                </div>
+              </div>
+              <div class="missing" data-missing hidden></div>
+              <div class="screen" data-screen>
+                <iframe title="Aperçu de l'email" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" data-frame></iframe>
+                <div class="screen__loading" data-loading><span></span></div>
+              </div>
+            </div>
+            <div class="stage__floor" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MODÈLES ============ -->
+    <section class="view" data-view="modeles" role="tabpanel" hidden>
+      <div class="hero hero--compact">
+        <div class="hero__text">
+          <p class="eyebrow" data-reveal>Bibliothèque</p>
+          <h1 class="display hero__title" data-split>Tes <span class="grad-text">modèles</span></h1>
+        </div>
+        <div class="hero__actions" data-reveal>
+          <div class="mseg" role="tablist" aria-label="Type de modèle">
+            <span class="mseg__glow" data-mseg-glow aria-hidden="true"></span>
+            <button class="mseg__btn is-active" type="button" data-mseg="emails"><span data-icon="mail"></span><span>Emails</span></button>
+            <button class="mseg__btn" type="button" data-mseg="factures"><span data-icon="receipt"></span><span>Factures</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sous-section EMAILS -->
+      <div data-sub="emails">
+        <div class="sub-head" data-reveal>
+          <p class="lead">Un fichier <span class="mono">.html</span> par modèle d'email. L'objet vient de <span class="mono">&lt;title&gt;</span>, chaque <span class="tag">{{balise}}</span> devient une case à remplir.</p>
+          <div class="sub-head__actions">
+            <a class="btn btn--ghost" href="/api/modele-exemple" download><span data-icon="download"></span><span>Exemple commenté</span></a>
+            <button class="btn btn--primary" type="button" data-import><span data-icon="upload"></span><span>Importer un .html</span></button>
+          </div>
+        </div>
+        <label class="drop glass" data-drop data-reveal>
+          <input type="file" accept=".html,.htm,text/html" data-file hidden>
+          <span class="drop__icon"><span data-icon="upload"></span></span>
+          <span class="drop__text"><strong>Glisse un fichier .html ici</strong><span>ou clique pour le choisir · 500 Ko maximum · un modèle du même nom est remplacé</span></span>
+        </label>
+        <div class="lib" data-lib></div>
+      </div>
+
+      <!-- Sous-section FACTURES -->
+      <div data-sub="factures" hidden>
+        <div class="sub-head" data-reveal>
+          <p class="lead">Le <strong>design de la page facture</strong> (ce que voit le client). Les balises se remplissent <strong>toutes seules</strong> avec les infos saisies à l'envoi. Choisis-en un <strong>par défaut (★)</strong>.</p>
+          <div class="sub-head__actions">
+            <a class="btn btn--ghost" href="/api/factures/modele-exemple" download><span data-icon="download"></span><span>Exemple commenté</span></a>
+            <button class="btn btn--primary" type="button" data-fimport><span data-icon="upload"></span><span>Importer un .html</span></button>
+          </div>
+        </div>
+        <details class="balises-ref glass" data-reveal>
+          <summary>Balises disponibles dans un modèle de facture</summary>
+          <div class="balises-ref__grid" data-balises-ref></div>
+        </details>
+        <label class="drop glass" data-fdrop data-reveal>
+          <input type="file" accept=".html,.htm,text/html" data-ffile hidden>
+          <span class="drop__icon"><span data-icon="upload"></span></span>
+          <span class="drop__text"><strong>Glisse un design de facture ici</strong><span>ou clique pour le choisir · 600 Ko maximum</span></span>
+        </label>
+        <div class="lib" data-flib></div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORIQUE ============ -->
+    <section class="view" data-view="historique" role="tabpanel" hidden>
+      <div class="hero hero--compact">
+        <div class="hero__text">
+          <p class="eyebrow" data-reveal>Journal</p>
+          <h1 class="display hero__title" data-split>Historique des <span class="grad-text">envois</span></h1>
+          <p class="lead" data-reveal>Les 300 derniers emails : qui les a envoyés, à qui, avec quel modèle.</p>
+        </div>
+        <div class="hero__actions" data-reveal>
+          <div class="input-icon search"><span data-icon="search"></span><input class="input" type="search" placeholder="Rechercher une adresse, un objet…" data-search aria-label="Rechercher"></div>
+        </div>
+      </div>
+      <div class="panel glass table-panel" data-reveal>
+        <div class="table-scroll"><table class="t" data-history></table></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

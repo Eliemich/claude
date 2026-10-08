@@ -1,0 +1,25 @@
+name: tradingbara-mail
+services:
+  app:
+    build: .
+    image: tradingbara-mail:latest
+    container_name: tradingbara-mail-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATA_DIR: /app/data
+      TRUST_PROXY: "1"
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks: [tradingbara-mail]
+    mem_limit: 256m
+    cpus: 0.5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+networks:
+  tradingbara-mail:
+    name: tradingbara-mail

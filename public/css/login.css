@@ -1,0 +1,85 @@
+/* ==========================================================================
+   Page de connexion
+   ========================================================================== */
+.page-login { overflow: hidden auto; }
+.login {
+  position: relative; z-index: 3; min-height: 100vh; min-height: 100dvh;
+  display: grid; place-items: center; align-content: center; gap: clamp(22px, 4vh, 40px);
+  padding: 48px 16px 28px; perspective: 1400px;
+}
+
+/* ---------- Marque : le logo en icône flottante (3D, halo néon, yeux, reflet) ---------- */
+.login__brand { display: grid; justify-items: center; gap: 14px; text-align: center; }
+.emblem { --s: clamp(118px, 15vh, 156px); position: relative; width: var(--s); height: var(--s); perspective: 900px; }
+.emblem__halo { position: absolute; inset: -38%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(47, 123, 255, .5) 0%, rgba(47, 123, 255, .18) 38%, transparent 66%); filter: blur(6px);
+  animation: breathe 4.5s ease-in-out infinite; }
+.emblem__icon { position: relative; width: 100%; height: 100%; border-radius: 19%; overflow: hidden; transform-style: preserve-3d; will-change: transform;
+  background: #000;
+  box-shadow: 0 0 0 1px rgba(157, 210, 255, .22), 0 0 34px -4px rgba(47, 123, 255, .75), 0 26px 50px -18px rgba(0, 0, 0, .95), 0 0 90px -10px rgba(47, 123, 255, .45); }
+.emblem__icon img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.04); }
+/* Yeux : lueur qui s'allume et palpite (positions mesurées sur le logo) */
+.emblem__eye { position: absolute; width: 26%; aspect-ratio: 1.6; margin: -8.1% 0 0 -13%; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; opacity: 0;
+  background: radial-gradient(closest-side, rgba(225, 240, 255, .95), rgba(90, 169, 255, .75) 35%, rgba(47, 123, 255, 0)); }
+.emblem__eye--l { left: 30.7%; top: 51%; }
+.emblem__eye--r { left: 70.8%; top: 48.4%; }
+/* Reflet qui balaye l'icône */
+.emblem__shine { position: absolute; inset: -20%; pointer-events: none; mix-blend-mode: screen; transform: translateX(-120%) rotate(18deg);
+  background: linear-gradient(90deg, transparent 38%, rgba(190, 225, 255, .28) 48%, rgba(255, 255, 255, .45) 50%, rgba(190, 225, 255, .28) 52%, transparent 62%); }
+/* Reflet au sol */
+.emblem__floor { position: absolute; left: 10%; right: 10%; bottom: -26px; height: 22px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(47, 123, 255, .55), transparent); filter: blur(6px); }
+@keyframes breathe { 50% { transform: scale(1.1); opacity: .65; } }
+
+.login__word { margin: 4px 0 0; font-size: clamp(1.55rem, 4.6vw, 2.5rem); letter-spacing: .2em; padding-left: .2em; }
+.login__tag { margin: 0; display: inline-flex; align-items: center; gap: 12px; font-family: var(--mono); font-size: .72rem; letter-spacing: .32em; text-transform: uppercase; color: var(--muted); }
+.login__tag span { width: 28px; height: 1px; background: linear-gradient(90deg, transparent, var(--blue-2)); }
+.login__tag span:last-child { transform: scaleX(-1); }
+
+/* ---------- Carte de connexion ---------- */
+.login-card { width: min(440px, 100%); padding: 34px 34px 22px; transform-style: preserve-3d; will-change: transform; }
+.login-card form { display: grid; gap: 0; }
+.login__title { font-size: clamp(1.6rem, 4vw, 2rem); }
+.login__intro { margin: 10px 0 26px; color: var(--ink-2); font-size: .95rem; }
+.login__fields { display: grid; gap: 18px; margin-bottom: 26px; }
+.login__submit [data-icon] svg { transition: transform .4s var(--ease); }
+.login__submit:hover [data-icon] svg { transform: translateX(4px); }
+.login-card .form-error { margin-top: 14px; text-align: center; }
+.login-card__foot { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 10px 0 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: .76rem; color: var(--faint); }
+.login-card__foot svg { width: 15px; height: 15px; color: var(--blue-2); }
+.code-input { font-family: var(--mono); font-size: 1.5rem; letter-spacing: .5em; text-align: center; padding-left: calc(16px + .5em); }
+.login__steps { margin: 14px 0 18px; padding-left: 20px; display: grid; gap: 6px; color: var(--ink-2); font-size: .9rem; }
+.login__qr { justify-self: center; padding: 12px; border-radius: 16px; background: #eef3ff; margin-bottom: 12px; box-shadow: 0 0 40px -6px rgba(47, 123, 255, .6); }
+.login__secret { margin: 0 0 18px; text-align: center; font-size: .8rem; color: var(--muted); }
+.login__secret code { font-family: var(--mono); color: var(--blue-3); word-break: break-all; }
+.login-card [data-step="setup"] .field, .login-card [data-step="totp"] .field { margin-bottom: 22px; }
+
+/* Bordure animée (faisceau qui tourne autour de la carte) */
+@property --beam { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+.beam::before {
+  background:
+    conic-gradient(from var(--beam), transparent 0 64%, rgba(157, 210, 255, .95) 76%, rgba(47, 123, 255, .7) 82%, transparent 90%),
+    linear-gradient(160deg, rgba(157, 210, 255, .28), rgba(90, 169, 255, .06) 35%, rgba(47, 123, 255, .22));
+  animation: beam 7s linear infinite;
+}
+@keyframes beam { to { --beam: 360deg; } }
+
+/* Reflet de l'inclinaison 3D */
+.glare { position: absolute; left: 50%; top: 50%; width: 120%; aspect-ratio: 1; margin: -60% 0 0 -60%; border-radius: 50%; pointer-events: none; z-index: 3; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 255, 255, .09), transparent 55%); mix-blend-mode: screen; }
+
+.login-legal { text-align: center; font-family: var(--mono); font-size: .68rem; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); pointer-events: none; }
+
+/* Avant l'animation d'entrée (évite un flash) ; affichage forcé après 2,5 s si le JavaScript ne s'exécute pas */
+.js-intro [data-orb], .js-intro [data-word], .js-intro [data-tag], .js-intro [data-card] { opacity: 0; animation: intro-fallback .01s 2.5s forwards; }
+@keyframes intro-fallback { to { opacity: 1; } }
+
+@media (max-width: 520px) {
+  .login { padding-top: 32px; }
+  .login-card { padding: 26px 20px 18px; }
+  .emblem { --s: 108px; }
+}
+@media (max-height: 720px) and (min-width: 521px) {
+  .login { gap: 18px; padding-top: 28px; }
+  .emblem { --s: 100px; }
+}

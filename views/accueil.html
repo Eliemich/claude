@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>503 Service Temporarily Unavailable</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/css/decoy.css">
+</head>
+<body>
+  <!-- Écran de maintenance (décor). Le vrai outil n'est pas sur cette page :
+       il est chargé seulement après la séquence, par une navigation vers /connexion. -->
+  <main class="err" data-err>
+    <div class="err__card">
+      <p class="err__code">503</p>
+      <h1 class="err__title">Service temporairement indisponible</h1>
+      <p class="err__text">
+        Le serveur est momentanément dans l'incapacité de traiter votre requête en raison
+        d'une opération de maintenance. Merci de réessayer dans quelques instants.
+      </p>
+      <div class="err__bar"><span></span></div>
+      <dl class="err__meta">
+        <div><dt>Statut</dt><dd>Maintenance planifiée</dd></div>
+        <div><dt>ID de référence</dt><dd data-ref>—</dd></div>
+        <div><dt>Horodatage (UTC)</dt><dd data-ts>—</dd></div>
+      </dl>
+    </div>
+  </main>
+
+  <!-- Petits points : séquence rouge → bleu → noir -->
+  <div class="sig" aria-hidden="true">
+    <span class="sig__dot sig__dot--r" data-dot="red"></span>
+    <span class="sig__dot sig__dot--b" data-dot="blue" hidden></span>
+    <span class="sig__dot sig__dot--k" data-dot="black" hidden></span>
+  </div>
+
+  <script src="/js/decoy.js"></script>
+</body>
+</html>

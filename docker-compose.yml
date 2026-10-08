@@ -1,0 +1,50 @@
+# ============================================================
+#  TRADING BARA MAIL — mise en ligne (VPS, dossier /opt/tradingbara-mail)
+#  Conteneurs isolés dans leur propre réseau, préfixés « tradingbara-mail- » :
+#    app     interface + API (Node)                                 — données dans ./data
+#    tunnel  tunnel Cloudflare (cloudflared) : HTTPS par Cloudflare,
+#            AUCUN port ouvert sur le VPS (ni 80 ni 443 : ceux du bot et de ME Recovery ne sont pas touchés)
+#  Variables lues dans ./.env (modèle : deploy/env.production.example).
+#  Procédure complète : deploy/DEPLOIEMENT.md
+#  ⚠ Ne jamais lancer « docker system prune » ni « docker volume prune » sur le VPS :
+#    ces commandes toucheraient aussi aux autres conteneurs de la machine.
+# ============================================================
+name: tradingbara-mail
+
+services:
+  app:
+    build: .
+    image: tradingbara-mail:latest
+    container_name: tradingbara-mail-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATA_DIR: /app/data
+      TRUST_PROXY: "1"
+    volumes:
+      - ./data:/app/data
+    networks: [tradingbara-mail]
+    expose: ["8090"]
+    mem_limit: 256m
+    cpus: 0.5
+    logging: &logs
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  tunnel:
+    # Image officielle Cloudflare (mise à jour : docker compose pull tunnel && docker compose up -d tunnel)
+    image: cloudflare/cloudflared:latest
+    container_name: tradingbara-mail-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on: [app]
+    networks: [tradingbara-mail]
+    mem_limit: 128m
+    logging: *logs
+
+networks:
+  tradingbara-mail:
+    name: tradingbara-mail

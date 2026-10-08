@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<!--
+  ==================================================================
+   MODÈLE DE FACTURE — À MODIFIER COMME TU VEUX
+  ==================================================================
+   C'est la PAGE que ton client voit en cliquant « Voir ma facture ».
+   1. NOM dans la liste : la balise <meta name="modele"> ci-dessous.
+   2. BALISES : elles se remplissent TOUTES SEULES à partir des infos
+      saisies à l'envoi (tu ne re-remplis rien). Disponibles :
+        {{numero_facture}}  le numéro (ex. TB-2026-0001)
+        {{montant}}         le montant réglé (ex. 49,90 €)
+        {{date_paiement}}   la date du paiement
+        {{heure}}           l'heure du paiement
+        {{lieu}}            le lieu
+        {{client_nom}}      le nom du client (champ « Nom du client »)
+        {{client_email}}    l'email du client (le destinataire)
+        {{description}}     ce qui est facturé
+        {{emise_le}}        la date d'émission
+        {{prenom}}          + toutes les balises du MAIL remplies à l'envoi
+      Une balise laissée vide s'affiche… vide (rien n'apparaît).
+   3. STYLE : mets ton CSS dans <style> ci-dessous (inline aussi OK).
+   4. IMAGES : uniquement avec une adresse en ligne https://…
+   5. PAS de <script> (il serait ignoré pour la sécurité).
+   6. Enregistre, puis : onglet Modèles → Factures → Importer.
+      Mets ce modèle « par défaut » (★) pour qu'il soit utilisé.
+   Ces commentaires sont retirés à l'affichage.
+  ==================================================================
+-->
+<meta name="modele" content="Exemple : facture simple">
+<meta name="description" content="Modèle d'exemple à copier pour créer le tien.">
+<title>Facture {{numero_facture}}</title>
+<style>
+  body{margin:0;background:#f4f5f7;color:#1f2430;font-family:Arial,Helvetica,sans-serif;padding:28px 14px}
+  .sheet{max-width:620px;margin:0 auto;background:#fff;border:1px solid #e4e7ec;border-radius:12px;padding:34px}
+  h1{margin:0 0 4px;font-size:22px}.muted{color:#6b7280;font-size:13px}
+  .row{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid #eef0f3;font-size:14px}
+  .row span:first-child{color:#6b7280}
+  .total{margin-top:16px;font-size:18px;font-weight:bold;display:flex;justify-content:space-between}
+  .badge{display:inline-block;margin-top:8px;padding:4px 10px;border-radius:99px;background:#e3faf0;color:#0a7d52;font-size:12px;font-weight:bold}
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <!-- Le bloc SAMPLE ne s'affiche que dans l'aperçu, pas sur une vraie facture -->
+    <!--SAMPLE--><p class="muted">Aperçu d'exemple</p><!--/SAMPLE-->
+
+    <h1>Facture {{numero_facture}}</h1>
+    <p class="muted">Trading Bara — contact@tradingbara.uk</p>
+    <span class="badge">Payée</span>
+
+    <div style="margin-top:22px">
+      <div class="row"><span>Client</span><span>{{client_nom}}</span></div>
+      <div class="row"><span>Email</span><span>{{client_email}}</span></div>
+      <div class="row"><span>Prestation</span><span>{{description}}</span></div>
+      <div class="row"><span>Payé le</span><span>{{date_paiement}} {{heure}}</span></div>
+      <div class="row"><span>Lieu</span><span>{{lieu}}</span></div>
+    </div>
+
+    <div class="total"><span>Total réglé</span><span>{{montant}}</span></div>
+
+    <p class="muted" style="margin-top:24px">Merci {{prenom}} pour ta confiance.</p>
+  </div>
+</body>
+</html>

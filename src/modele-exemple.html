@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  ==================================================================
+   MODÈLE D'EMAIL TRADING BARA — À MODIFIER COMME TU VEUX
+  ==================================================================
+   1. NOM dans la liste : la balise <meta name="modele"> ci-dessous.
+   2. DESCRIPTION (affichée sous le nom) : <meta name="description">.
+   3. OBJET de l'email : la balise <title> (balises {{…}} acceptées).
+   4. BALISES : écris {{prenom}}, {{date_fin}}, {{montant}}… n'importe où.
+      À l'envoi, une case apparaît pour chacune, à remplir.
+      Lettres, chiffres et _ uniquement (pas d'espace, pas de tiret).
+        · dans un lien  href="{{lien_paiement}}"  → adresse https:// exigée
+        · nommée message… ou texte… (ex. {{message}}) → texte sur plusieurs
+          lignes, les retours à la ligne sont conservés
+        · {{email}} est rempli tout seul avec l'adresse du destinataire
+   5. LOGO DU CHAT : <img src="cid:logo"> (il est joint à l'email).
+      Autres images : uniquement avec une adresse en ligne https://…
+   6. Mise en page en tableaux (<table>) et styles dans style="…" :
+      c'est ce que Gmail, Outlook et Apple Mail affichent le mieux.
+   7. Enregistre, puis : onglet Modèles → Importer (ou glisse le fichier).
+   Ces commentaires sont retirés à l'envoi.
+  ==================================================================
+-->
+<meta name="modele" content="Exemple : confirmation de paiement">
+<meta name="description" content="Modèle d'exemple à copier pour créer les tiens.">
+<title>Paiement reçu — merci {{prenom}} !</title>
+</head>
+<body style="margin:0;padding:0;background:#05070d" bgcolor="#05070d">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#05070d" style="background:#05070d">
+    <tr><td align="center" style="padding:36px 14px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
+
+        <!-- EN-TÊTE : logo + nom -->
+        <tr><td style="padding:0 6px 20px">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="vertical-align:middle"><img src="cid:logo" width="56" height="56" alt="Trading Bara" style="display:block;border:0;border-radius:13px"></td>
+            <td style="vertical-align:middle;padding-left:12px;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;letter-spacing:4px;color:#ffffff">TRADING <span style="color:#4d95ff">BARA</span></td>
+          </tr></table>
+        </td></tr>
+
+        <!-- CARTE -->
+        <tr><td bgcolor="#0c121e" style="background:#0c121e;border:1px solid #1c2840;border-radius:18px;padding:34px;font-family:Arial,Helvetica,sans-serif">
+          <h1 style="margin:0 0 14px;font-size:26px;color:#ffffff">Merci {{prenom}} !</h1>
+          <p style="margin:0 0 22px;font-size:15px;line-height:1.65;color:#aab6cf">
+            Nous avons bien reçu ton paiement de <strong style="color:#ffffff">{{montant}}</strong>.
+          </p>
+
+          <!-- BOUTON : le lien est une balise (adresse https:// obligatoire à l'envoi) -->
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td bgcolor="#2f7bff" style="border-radius:12px;background:#2f7bff">
+              <a href="{{lien}}" style="display:inline-block;padding:14px 28px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none">Voir mon reçu</a>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <!-- PIED DE PAGE -->
+        <tr><td style="padding:24px 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#56627c;text-align:center">
+          Trading Bara · tradingbara.uk · Email envoyé à {{email}}
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

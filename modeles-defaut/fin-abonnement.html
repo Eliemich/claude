@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="supported-color-schemes" content="dark light">
+<meta name="modele" content="Rappel — fin d'abonnement">
+<meta name="description" content="Prévient un abonné que son accès se termine bientôt, avec le lien pour renouveler (ou la commande /abonner du bot).">
+<title>{{prenom}}, ton accès Trading Bara se termine le {{date_fin}}</title>
+</head>
+<body style="margin:0;padding:0;background:#05070d;-webkit-text-size-adjust:100%" bgcolor="#05070d">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">Renouvelle en un clic pour garder ton accès au canal.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#05070d" style="background:#05070d">
+    <tr><td align="center" style="padding:36px 14px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">
+
+        <!-- EN-TÊTE -->
+        <tr><td style="padding:0 6px 20px">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td style="vertical-align:middle"><img src="cid:logo" width="56" height="56" alt="Trading Bara" style="display:block;border:0;border-radius:13px"></td>
+            <td style="vertical-align:middle;padding-left:12px;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;letter-spacing:4px;color:#ffffff">TRADING <span style="color:#4d95ff">BARA</span></td>
+          </tr></table>
+        </td></tr>
+
+        <!-- CARTE -->
+        <tr><td bgcolor="#0c121e" style="background:#0c121e;border:1px solid #1c2840;border-radius:18px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr><td height="4" bgcolor="#ffb547" style="background:#ffb547;background-image:linear-gradient(90deg,#1747d6,#3a8bff,#ffb547);border-radius:18px 18px 0 0;font-size:0;line-height:0">&nbsp;</td></tr>
+            <tr><td style="padding:36px 34px 8px;font-family:Arial,Helvetica,sans-serif">
+              <p style="margin:0 0 10px;font-size:12px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;color:#ffb547">Rappel</p>
+              <h1 style="margin:0 0 16px;font-size:26px;line-height:1.25;color:#ffffff">{{prenom}}, ton accès arrive à son terme</h1>
+              <p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#aab6cf">
+                Ton abonnement au canal privé Trading Bara se termine bientôt. Pour continuer à recevoir les alertes et les analyses sans interruption, pense à le renouveler.
+              </p>
+            </td></tr>
+
+            <!-- DATE DE FIN -->
+            <tr><td style="padding:0 34px">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#101a2c" style="background:#101a2c;border:1px solid #1c2840;border-radius:14px">
+                <tr><td align="center" style="padding:22px 18px;font-family:Arial,Helvetica,sans-serif">
+                  <p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#7f8ca8">Fin de l'accès</p>
+                  <p style="margin:0;font-size:24px;font-weight:bold;color:#ffffff">{{date_fin}}</p>
+                </td></tr>
+              </table>
+            </td></tr>
+
+            <!-- BOUTON -->
+            <tr><td align="center" style="padding:28px 34px 8px">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td bgcolor="#2f7bff" style="border-radius:12px;background:#2f7bff;background-image:linear-gradient(135deg,#3a8bff,#1747d6)">
+                  <a href="{{lien_paiement}}" style="display:inline-block;padding:15px 30px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px">Renouveler mon accès →</a>
+                </td>
+              </tr></table>
+            </td></tr>
+            <tr><td align="center" style="padding:10px 34px 4px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#7f8ca8">
+              Tu peux aussi renouveler directement dans le bot Telegram avec la commande <strong style="color:#ffffff">/abonner</strong>.
+            </td></tr>
+
+            <tr><td style="padding:26px 34px 32px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#7f8ca8">
+              À très vite dans le canal,<br><strong style="color:#ffffff">L'équipe Trading Bara</strong>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- PIED DE PAGE -->
+        <tr><td style="padding:24px 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.7;color:#56627c;text-align:center">
+          Trading Bara · <a href="https://tradingbara.uk" style="color:#6fa8ff;text-decoration:none">tradingbara.uk</a> · Déjà renouvelé ? Ne tiens pas compte de ce message.<br>
+          Le trading comporte un risque de perte en capital. Nos contenus sont fournis à titre informatif et ne constituent pas un conseil en investissement.
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
