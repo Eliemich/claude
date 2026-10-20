@@ -84,8 +84,8 @@
         </div>
 
         <div class="dates">
-          <div><span>Date d'émission</span><strong>{{emise_le}}</strong></div>
-          <div><span>Payé le</span><strong>{{date_paiement}}</strong></div>
+          <div><span>Date d'émission</span><strong>{{date:emise_le}}</strong></div>
+          <div><span>Payé le</span><strong>{{date:date_paiement}}</strong></div>
           <div><span>Lieu</span><strong>{{lieu}}</strong></div>
         </div>
 
@@ -114,8 +114,8 @@
         <div class="side__rows">
           <div class="side__row"><span>Numéro</span><strong>{{numero_facture}}</strong></div>
           <div class="side__row"><span>Montant</span><strong>{{montant}}</strong></div>
-          <div class="side__row"><span>Payé le</span><strong>{{date_paiement}}</strong></div>
-          <div class="side__row"><span>Heure</span><strong>{{heure}}</strong></div>
+          <div class="side__row"><span>Payé le</span><strong>{{date:date_paiement}}</strong></div>
+          <div class="side__row"><span>Heure</span><strong>{{time:heure}}</strong></div>
         </div>
       </aside>
     </div>

@@ -105,10 +105,10 @@ try {
   const ap = (await call('POST', '/api/apercu', { modele: 'bienvenue', to: 'alex@example.com', vars: { prenom: 'Alex' } })).data;
   check(ap.subject === 'Bienvenue chez Trading Bara, Alex 🐾', 'objet rempli avec les balises');
   check(ap.missing.join() === 'date_fin,lien_telegram', 'balises manquantes signalées');
-  check(ap.html.includes('{{date_fin}}'), 'balise vide visible dans l\'aperçu');
+  check(ap.html.includes('{{date:date_fin}}'), 'balise vide visible dans l\'aperçu');
   const incomplete = await call('POST', '/api/envoi', { modele: 'bienvenue', to: 'alex@example.com', vars: { prenom: 'Alex' } });
   check(incomplete.status === 400 && incomplete.data.fields?.var_date_fin, 'envoi refusé s\'il manque une balise');
-  const js = await call('POST', '/api/envoi', { modele: 'bienvenue', to: 'alex@example.com', vars: { prenom: 'Alex', date_fin: '6 nov.', lien_telegram: 'javascript:alert(1)' } });
+  const js = await call('POST', '/api/envoi', { modele: 'bienvenue', to: 'alex@example.com', vars: { prenom: 'Alex', date_fin: '2026-11-06', lien_telegram: 'javascript:alert(1)' } });
   check(js.status === 400 && js.data.fields?.var_lien_telegram, 'lien non https:// refusé');
   const badTo = await call('POST', '/api/envoi', { modele: 'test', to: 'pas-une-adresse', vars: { prenom: 'A', message: 'B' } });
   check(badTo.status === 400 && badTo.data.fields?.to, 'adresse du destinataire invalide refusée');

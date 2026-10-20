@@ -14,13 +14,13 @@
       saisies à l'envoi (tu ne re-remplis rien). Disponibles :
         {{numero_facture}}  le numéro (ex. TB-2026-0001)
         {{montant}}         le montant réglé (ex. 49,90 €)
-        {{date_paiement}}   la date du paiement
-        {{heure}}           l'heure du paiement
+        {{date:date_paiement}} la date du paiement
+        {{time:heure}}      l'heure du paiement
         {{lieu}}            le lieu
         {{client_nom}}      le nom du client (champ « Nom du client »)
         {{client_email}}    l'email du client (le destinataire)
         {{description}}     ce qui est facturé
-        {{emise_le}}        la date d'émission
+        {{date:emise_le}}   la date d'émission
         {{prenom}}          + toutes les balises du MAIL remplies à l'envoi
       Une balise laissée vide s'affiche… vide (rien n'apparaît).
    3. STYLE : mets ton CSS dans <style> ci-dessous (inline aussi OK).
@@ -57,7 +57,7 @@
       <div class="row"><span>Client</span><span>{{client_nom}}</span></div>
       <div class="row"><span>Email</span><span>{{client_email}}</span></div>
       <div class="row"><span>Prestation</span><span>{{description}}</span></div>
-      <div class="row"><span>Payé le</span><span>{{date_paiement}} {{heure}}</span></div>
+      <div class="row"><span>Payé le</span><span>{{date:date_paiement}} {{time:heure}}</span></div>
       <div class="row"><span>Lieu</span><span>{{lieu}}</span></div>
     </div>
 
