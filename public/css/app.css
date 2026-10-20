@@ -112,6 +112,8 @@
 .var-label .tag { font-size: .7rem; letter-spacing: 0; text-transform: none; }
 .field.is-done .input { box-shadow: 0 0 0 1px rgba(54, 227, 166, .32) inset; }
 .field .hint--err { color: #ff8da0; }
+/* {{code6:…}} : chiffres bien espacés, faciles à relire */
+.input--code { font-family: var(--mono); letter-spacing: .3em; }
 /* {{date:…}} : case date + bouton « Auj. » */
 .input-row { display: flex; gap: 8px; align-items: center; }
 .input-row .input { flex: 1; min-width: 0; }

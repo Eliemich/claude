@@ -133,26 +133,31 @@ try {
   console.log('\nBalises typées {{type:nom}}');
   const suivi = '<!DOCTYPE html><html><head><meta name="modele" content="Suivi"><title>Commande {{numero}} du {{ date : date_recup }}</title></head><body>'
     + '<p>{{coursier}} passe le {{date:date_recup}} entre {{time:heure_debut}} et {{ time:heure_fin }}, {{adresse:lieu_recup}} ({{code_postal}} {{ville}}).</p>'
-    + '<p>Rappel : {{date_recup}}, {{ inconnu:remarque }}</p></body></html>';
+    + '<p>Rappel : {{date_recup}}, {{ inconnu:remarque }}, code {{code6:code_retrait}}, porte {{ code5 : code_porte }}, {{code99:ref}}</p></body></html>';
   const ts = await call('POST', '/api/modeles', { fichier: 'suivi.html', html: suivi });
   const types = Object.fromEntries((ts.data.balises || []).map((b) => [b.nom, b.type]));
-  check(ts.status === 201 && Object.keys(types).join() === 'numero,date_recup,coursier,heure_debut,heure_fin,lieu_recup,code_postal,ville,remarque', 'balises uniques, nom sans préfixe');
+  check(ts.status === 201 && Object.keys(types).join() === 'numero,date_recup,coursier,heure_debut,heure_fin,lieu_recup,code_postal,ville,remarque,code_retrait,code_porte,ref', 'balises uniques, nom sans préfixe');
   check(types.date_recup === 'date' && types.heure_debut === 'time' && types.lieu_recup === 'adresse', 'préfixes date / time / adresse reconnus (espaces tolérés)');
   check(types.coursier === 'ligne' && types.remarque === 'ligne', 'sans préfixe ou préfixe inconnu → texte');
   check(ts.data.balises.find((b) => b.nom === 'heure_fin')?.min === '08:00', 'plage horaire envoyée à l\'interface');
-  const sv = { numero: 'A12', coursier: 'Sam', date_recup: '2026-10-20', heure_debut: '09:00', heure_fin: '11:30', lieu_recup: '8 Boulevard du Port 80000 Amiens', code_postal: '80000', ville: 'Amiens', remarque: 'RAS' };
+  const lg = (n) => ts.data.balises.find((b) => b.nom === n);
+  check(lg('code_retrait').type === 'code' && lg('code_retrait').longueur === 6 && lg('code_porte').longueur === 5, '{{code6:…}} / {{code5:…}} → code de 6 / 5 chiffres');
+  check(types.ref === 'ligne', '{{code99:…}} (hors 1–20) → texte');
+  const sv = { numero: 'A12', coursier: 'Sam', date_recup: '2026-10-20', heure_debut: '09:00', heure_fin: '11:30', lieu_recup: '8 Boulevard du Port 80000 Amiens', code_postal: '80000', ville: 'Amiens', remarque: 'RAS', code_retrait: '048213', code_porte: '12345', ref: 'X' };
   const sendSuivi = (vars, extra = {}) => call('POST', '/api/envoi', { modele: 'suivi', to: 'cli@example.com', vars, ...extra });
   check((await sendSuivi({ ...sv, heure_debut: '07:30' })).data.fields?.var_heure_debut, 'heure avant 08:00 refusée');
   check((await sendSuivi({ ...sv, heure_fin: '20:30' })).data.fields?.var_heure_fin, 'heure après 20:00 refusée');
   check((await sendSuivi({ ...sv, heure_fin: '09:00' })).data.fields?.var_heure_fin, 'heure de fin ≤ début refusée');
   check((await sendSuivi({ ...sv, date_recup: '2026-02-31' })).data.fields?.var_date_recup, 'date impossible refusée');
+  check((await sendSuivi({ ...sv, code_retrait: '12345' })).data.fields?.var_code_retrait, 'code à 5 chiffres refusé pour {{code6:…}}');
+  check((await sendSuivi({ ...sv, code_porte: '12a45' })).data.fields?.var_code_porte, 'code avec une lettre refusé');
   const svAp = (await call('POST', '/api/apercu', { modele: 'suivi', to: 'cli@example.com', vars: sv })).data;
   check(svAp.subject === 'Commande A12 du 20 octobre 2026' && svAp.html.split('20 octobre 2026').length === 4, 'date écrite en toutes lettres (objet, <title> et 2 balises)');
   const before = new Set(fs.readdirSync(path.join(DATA, 'outbox')));
   const okSuivi = await sendSuivi(sv, { subject: 'Commande {{numero}} {{pas_dans_le_modele}}' });
   const newFile = fs.readdirSync(path.join(DATA, 'outbox')).find((f) => !before.has(f));
   const svMail = newFile ? fs.readFileSync(path.join(DATA, 'outbox', newFile), 'utf8') : '';
-  check(okSuivi.status === 200 && svMail.includes('entre 09:00 et 11:30') && svMail.includes('(80000 Amiens)'), 'envoi : balises typées remplacées');
+  check(okSuivi.status === 200 && svMail.includes('entre 09:00 et 11:30') && svMail.includes('(80000 Amiens)') && svMail.includes('code 048213'), 'envoi : balises typées remplacées');
   check(!svMail.includes('{{'), 'aucune balise vide n\'arrive chez le client');
   check((await call('DELETE', '/api/modeles/suivi')).status === 200, 'modèle typé supprimé');
 

@@ -7,6 +7,7 @@
  *    son type vient du préfixe facultatif {{type:nom}} :
  *      {{date:…}} → calendrier + bouton « Auj. »,  {{time:…}} → heure entre 08:00 et 20:00
  *      (et heure_debut < heure_fin),  {{adresse:…}} → suggestions d'adresses (voir adresse.js),
+ *      {{code6:…}} → exactement 6 chiffres (codeN : N chiffres),
  *      sans préfixe → texte (ou lien / texte multiligne, comme avant) ;
  *  - libellés des cases : balise-labels.js.
  */
@@ -33,6 +34,7 @@ function placeholderFor(b) {
   if (b.type === 'lien') return 'https://…';
   if (b.type === 'texte') return 'Ton message… (les retours à la ligne sont conservés)';
   if (b.type === 'adresse') return 'Ex. 8 boulevard du Port, Amiens';
+  if (b.type === 'code') return `Ex. ${'48291375601234567890'.slice(0, b.longueur)}`;
   if (/prenom/.test(n)) return 'Ex. Alex';
   if (/^nom/.test(n)) return 'Ex. Martin';
   if (/date/.test(n)) return `Ex. ${fdateLong(new Date(Date.now() + 30 * 864e5))}`;
@@ -46,6 +48,7 @@ function problemOf(b, v) {
   if (!v) return 'à remplir';
   if (b.type === 'lien' && !LINK_RE.test(v)) return 'adresse https:// attendue';
   if (b.type === 'date' && !ISO_DATE_RE.test(v)) return 'date invalide';
+  if (b.type === 'code' && !new RegExp(`^\\d{${b.longueur}}$`).test(v)) return `${b.longueur} chiffres attendus`;
   if (b.type === 'time') {
     if (!TIME_RE.test(v)) return 'heure invalide';
     const min = b.min || TIME_MIN;
@@ -191,6 +194,11 @@ export function createCompose(root, { fx, getStatus, onSent }) {
         const max = b.max || TIME_MAX;
         input = `<input class="input" type="time" ${plain} min="${esc(min)}" max="${esc(max)}" step="60" value="${esc(value)}">`;
         hint = `<span class="hint" data-var-hint>Entre ${esc(min)} et ${esc(max)}</span>`;
+      } else if (b.type === 'code') {
+        input = `<div class="input-icon"><span data-icon>${ICON.shield}</span>
+            <input class="input input--code" type="text" id="${id}" data-var="${esc(b.nom)}" data-digits="${b.longueur}" inputmode="numeric"
+              placeholder="${esc(placeholderFor(b))}" value="${esc(value)}" autocomplete="off" spellcheck="false"></div>`;
+        hint = `<span class="hint">Exactement ${b.longueur} chiffre${b.longueur > 1 ? 's' : ''}</span>`;
       } else if (b.type === 'adresse') {
         input = `<div class="input-icon"><span data-icon>${ICON.search}</span>${adresseField(b.nom, common, value)}</div>`;
         const fills = [`code_postal_${b.nom}`, 'code_postal', `ville_${b.nom}`, 'ville'].filter(hasTag);
@@ -310,6 +318,11 @@ export function createCompose(root, { fx, getStatus, onSent }) {
   varsEl.addEventListener('input', (e) => {
     const name = e.target.dataset.var;
     if (!name) return;
+    // Codes {{codeN:…}} : on ne garde que les chiffres (un code collé « 123 456 » devient « 123456 »)
+    if (e.target.dataset.digits) {
+      const clean = e.target.value.replace(/\D/g, '').slice(0, Number(e.target.dataset.digits));
+      if (clean !== e.target.value) e.target.value = clean;
+    }
     values[name] = e.target.value;
     if (name === 'email') emailEdited = e.target.value.trim() !== toInput.value.trim();
     markDone();

@@ -8,7 +8,8 @@
  *  - balises à remplir à l'envoi : {{prenom}}, {{date_fin}}, {{lien_paiement}}… (lettres, chiffres, _) :
  *      · préfixe de type facultatif {{type:nom}} (espaces tolérés : {{ date : date_recup }}) :
  *          {{date:…}} → date (case calendrier, écrite « 20 octobre 2026 » dans l'email),
- *          {{time:…}} → heure entre 08:00 et 20:00, {{adresse:…}} → adresse avec suggestions ;
+ *          {{time:…}} → heure entre 08:00 et 20:00, {{adresse:…}} → adresse avec suggestions,
+ *          {{code6:…}} → exactement 6 chiffres ({{code5:…}} → 5 chiffres… de 1 à 20) ;
  *        le nom de la balise reste « nom » : {{date:date_recup}} et {{date_recup}} désignent la même valeur ;
  *      · balise placée dans un lien (href="{{…}}") → adresse https:// obligatoire ;
  *      · balise nommée message… ou texte… → texte sur plusieurs lignes (retours à la ligne conservés) ;
@@ -27,9 +28,18 @@ export const MAX_SIZE = 500 * 1024; // 500 Ko par fichier
 export const MAX_MODELES = 100;
 
 // {{nom}} ou {{type:nom}} — espaces tolérés partout : {{ date : date_recup }}. Groupes : 1 = type (facultatif), 2 = nom.
-const TAG_RE = /\{\{\s*(?:([\p{L}]{1,15})\s*:\s*)?([\p{L}\p{N}_]{1,30})\s*\}\}/gu;
+const TAG_RE = /\{\{\s*(?:(\p{L}[\p{L}\p{N}]{0,14})\s*:\s*)?([\p{L}\p{N}_]{1,30})\s*\}\}/gu;
 // Préfixes reconnus → type de champ. Un préfixe inconnu ({{abc:nom}}) donne un simple texte.
 const PREFIX_TYPES = { date: 'date', time: 'time', heure: 'time', adresse: 'adresse' };
+export const CODE_MAX = 20; // {{code1:…}} à {{code20:…}}
+
+/** Préfixe → { type, longueur? } ou null. {{code6:…}} → code de 6 chiffres exactement. */
+function prefixInfo(prefix) {
+  const p = prefix?.toLowerCase();
+  if (PREFIX_TYPES[p]) return { type: PREFIX_TYPES[p] };
+  const n = Number(p?.match(/^code(\d{1,2})$/)?.[1]);
+  return n >= 1 && n <= CODE_MAX ? { type: 'code', longueur: n } : null;
+}
 // Plage autorisée pour les champs heure (envoyée à l'interface avec chaque balise « time »).
 export const TIME_MIN = '08:00';
 export const TIME_MAX = '20:00';
@@ -56,7 +66,7 @@ function tagsOf(...texts) {
   for (const t of texts) {
     for (const [, prefix, n] of String(t || '').matchAll(TAG_RE)) {
       const nom = n.toLowerCase();
-      const type = PREFIX_TYPES[prefix?.toLowerCase()] || null;
+      const type = prefixInfo(prefix);
       if (!out.has(nom) || (type && !out.get(nom))) out.set(nom, type);
     }
   }
@@ -79,9 +89,11 @@ function describe(slug, html, stat) {
   const objet = decode((code.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').replace(/\s+/g, ' ').trim());
   const liens = new Set(linkTagsOf(code));
   // Type du champ : préfixe {{type:…}} d'abord, sinon déduit comme avant (lien, texte multiligne, ligne).
-  const balises = [...tagsOf(objet, code.replace(/<title[^>]*>[\s\S]*?<\/title>/i, ''))].map(([nom, prefixType]) => {
-    const type = prefixType || (liens.has(nom) ? 'lien' : isMultiline(nom) ? 'texte' : 'ligne');
-    return type === 'time' ? { nom, type, min: TIME_MIN, max: TIME_MAX } : { nom, type };
+  const balises = [...tagsOf(objet, code.replace(/<title[^>]*>[\s\S]*?<\/title>/i, ''))].map(([nom, info]) => {
+    const type = info?.type || (liens.has(nom) ? 'lien' : isMultiline(nom) ? 'texte' : 'ligne');
+    if (type === 'time') return { nom, type, min: TIME_MIN, max: TIME_MAX };
+    if (type === 'code') return { nom, type, longueur: info.longueur };
+    return { nom, type };
   });
   // Modèle « de type facture » : il contient la balise {{lien_facture}} → une facture est créée à l'envoi,
   // et les balises gérées par l'encadré Facture ne sont pas demandées comme simples cases de texte.
@@ -153,6 +165,7 @@ export function valueProblem(balise, value) {
   if (!value) return `Remplissez « {{${balise.nom}}} ».`;
   if (balise.type === 'lien' && !/^(https:\/\/|mailto:)\S+$/i.test(value)) return `« {{${balise.nom}}} » doit être une adresse qui commence par https://`;
   if (balise.type === 'date' && !isRealDate(value)) return `« {{${balise.nom}}} » : date invalide.`;
+  if (balise.type === 'code' && !new RegExp(`^\\d{${balise.longueur}}$`).test(value)) return `« {{${balise.nom}}} » doit contenir exactement ${balise.longueur} chiffres.`;
   if (balise.type === 'time') {
     if (!TIME_RE.test(value)) return `« {{${balise.nom}}} » : heure invalide (format HH:MM).`;
     // HH:MM sur 2 chiffres : la comparaison de textes suffit

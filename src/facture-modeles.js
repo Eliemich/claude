@@ -41,7 +41,7 @@ export const FACTURE_BALISES = [
 ];
 
 // {{nom}} ou {{type:nom}} (même syntaxe que les modèles de mail ; le préfixe est ignoré ici : les valeurs sont déjà mises en forme)
-const TAG_RE = /\{\{\s*(?:[\p{L}]{1,15}\s*:\s*)?([\p{L}\p{N}_]{1,40})\s*\}\}/gu;
+const TAG_RE = /\{\{\s*(?:\p{L}[\p{L}\p{N}]{0,14}\s*:\s*)?([\p{L}\p{N}_]{1,40})\s*\}\}/gu;
 const escHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const ENT = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&apos;': "'", '&nbsp;': ' ' };
 const decode = (s) => s.replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (e) => ENT[e]);
