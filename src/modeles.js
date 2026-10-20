@@ -6,8 +6,13 @@
  *  - objet de l'email = balise <title> ; nom dans la liste = <meta name="modele" content="…">
  *    (sinon le nom du fichier) ; description = <meta name="description" content="…"> ;
  *  - balises à remplir à l'envoi : {{prenom}}, {{date_fin}}, {{lien_paiement}}… (lettres, chiffres, _) :
+ *      · préfixe de type facultatif {{type:nom}} (espaces tolérés : {{ date : date_recup }}) :
+ *          {{date:…}} → date (case calendrier, écrite « 20 octobre 2026 » dans l'email),
+ *          {{time:…}} → heure entre 08:00 et 20:00, {{adresse:…}} → adresse avec suggestions ;
+ *        le nom de la balise reste « nom » : {{date:date_recup}} et {{date_recup}} désignent la même valeur ;
  *      · balise placée dans un lien (href="{{…}}") → adresse https:// obligatoire ;
  *      · balise nommée message… ou texte… → texte sur plusieurs lignes (retours à la ligne conservés) ;
+ *      · sinon (dont les anciennes balises sans préfixe) → texte sur une ligne ;
  *  - images : adresse https://… ou cid:logo (logo Trading Bara joint à l'email, voir email-assets/).
  */
 import fs from 'node:fs';
@@ -21,7 +26,13 @@ export const EXAMPLE_FILE = path.join(ROOT, 'src', 'modele-exemple.html');
 export const MAX_SIZE = 500 * 1024; // 500 Ko par fichier
 export const MAX_MODELES = 100;
 
-const TAG_RE = /\{\{\s*([\p{L}\p{N}_]{1,30})\s*\}\}/gu;
+// {{nom}} ou {{type:nom}} — espaces tolérés partout : {{ date : date_recup }}. Groupes : 1 = type (facultatif), 2 = nom.
+const TAG_RE = /\{\{\s*(?:([\p{L}]{1,15})\s*:\s*)?([\p{L}\p{N}_]{1,30})\s*\}\}/gu;
+// Préfixes reconnus → type de champ. Un préfixe inconnu ({{abc:nom}}) donne un simple texte.
+const PREFIX_TYPES = { date: 'date', time: 'time', heure: 'time', adresse: 'adresse' };
+// Plage autorisée pour les champs heure (envoyée à l'interface avec chaque balise « time »).
+export const TIME_MIN = '08:00';
+export const TIME_MAX = '20:00';
 // Commentaires HTML retirés (explications du modèle), sauf les commentaires conditionnels d'Outlook
 const COMMENT_RE = /<!--(?!\[if)[\s\S]*?-->/g;
 const ENTITIES = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&apos;': "'", '&nbsp;': ' ' };
@@ -36,17 +47,26 @@ export function slugify(name) {
 export const validSlug = (s) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length <= 60;
 const fileOf = (slug) => path.join(MODELES_DIR, `${slug}.html`);
 
-/** Balises d'un texte, dans l'ordre d'apparition, sans doublon (en minuscules). */
+/**
+ * Balises d'un texte, dans l'ordre d'apparition, sans doublon (en minuscules) : Map nom → type du préfixe (ou null).
+ * Si la même balise apparaît avec et sans préfixe ({{date:date_recup}} puis {{date_recup}}), le préfixe l'emporte.
+ */
 function tagsOf(...texts) {
-  const out = new Set();
-  for (const t of texts) for (const [, n] of String(t || '').matchAll(TAG_RE)) out.add(n.toLowerCase());
-  return [...out];
+  const out = new Map();
+  for (const t of texts) {
+    for (const [, prefix, n] of String(t || '').matchAll(TAG_RE)) {
+      const nom = n.toLowerCase();
+      const type = PREFIX_TYPES[prefix?.toLowerCase()] || null;
+      if (!out.has(nom) || (type && !out.get(nom))) out.set(nom, type);
+    }
+  }
+  return out;
 }
 
 /** Balises utilisées dans un lien (href="…{{lien}}…") : une adresse https:// est exigée. */
 function linkTagsOf(code) {
   const out = new Set();
-  for (const [, , v] of code.matchAll(/\bhref\s*=\s*(["'])([^"']*)\1/gi)) for (const [, n] of v.matchAll(TAG_RE)) out.add(n.toLowerCase());
+  for (const [, , v] of code.matchAll(/\bhref\s*=\s*(["'])([^"']*)\1/gi)) for (const [, , n] of v.matchAll(TAG_RE)) out.add(n.toLowerCase());
   return [...out];
 }
 const isMultiline = (tag) => /^(message|texte)/.test(tag);
@@ -58,9 +78,11 @@ function describe(slug, html, stat) {
   const meta = (name) => decode(code.match(new RegExp(`<meta\\s+name=["']${name}["']\\s+content=(["'])([\\s\\S]*?)\\1`, 'i'))?.[2] || '').trim();
   const objet = decode((code.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').replace(/\s+/g, ' ').trim());
   const liens = new Set(linkTagsOf(code));
-  const balises = tagsOf(objet, code.replace(/<title[^>]*>[\s\S]*?<\/title>/i, '')).map((nom) => ({
-    nom, type: liens.has(nom) ? 'lien' : isMultiline(nom) ? 'texte' : 'ligne',
-  }));
+  // Type du champ : préfixe {{type:…}} d'abord, sinon déduit comme avant (lien, texte multiligne, ligne).
+  const balises = [...tagsOf(objet, code.replace(/<title[^>]*>[\s\S]*?<\/title>/i, ''))].map(([nom, prefixType]) => {
+    const type = prefixType || (liens.has(nom) ? 'lien' : isMultiline(nom) ? 'texte' : 'ligne');
+    return type === 'time' ? { nom, type, min: TIME_MIN, max: TIME_MAX } : { nom, type };
+  });
   // Modèle « de type facture » : il contient la balise {{lien_facture}} → une facture est créée à l'envoi,
   // et les balises gérées par l'encadré Facture ne sont pas demandées comme simples cases de texte.
   const facture = balises.some((b) => b.nom === 'lien_facture');
@@ -121,11 +143,56 @@ export function deleteModele(slug) {
 
 /* ---------- Remplissage ---------- */
 
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const isRealDate = (v) => ISO_DATE_RE.test(v) && !Number.isNaN(Date.parse(`${v}T00:00:00Z`))
+  && new Date(`${v}T00:00:00Z`).toISOString().startsWith(v); // refuse 2026-02-31
+
 /** Vérifie une valeur de balise selon son type (renvoie le message d'erreur ou null). */
 export function valueProblem(balise, value) {
   if (!value) return `Remplissez « {{${balise.nom}}} ».`;
   if (balise.type === 'lien' && !/^(https:\/\/|mailto:)\S+$/i.test(value)) return `« {{${balise.nom}}} » doit être une adresse qui commence par https://`;
+  if (balise.type === 'date' && !isRealDate(value)) return `« {{${balise.nom}}} » : date invalide.`;
+  if (balise.type === 'time') {
+    if (!TIME_RE.test(value)) return `« {{${balise.nom}}} » : heure invalide (format HH:MM).`;
+    // HH:MM sur 2 chiffres : la comparaison de textes suffit
+    if (value < TIME_MIN || value > TIME_MAX) return `« {{${balise.nom}}} » doit être entre ${TIME_MIN} et ${TIME_MAX}.`;
+  }
   return null;
+}
+
+/**
+ * Vérifications entre plusieurs balises : une heure de début doit précéder l'heure de fin.
+ * Paires reconnues : heure_debut / heure_fin, et plus largement …debut… / …fin… (heure_debut_recup / heure_fin_recup).
+ * Renvoie [{ nom, message }] (nom = balise à signaler, celle de fin).
+ */
+export function crossProblems(balises, values) {
+  const out = [];
+  const times = new Set(balises.filter((b) => b.type === 'time').map((b) => b.nom));
+  for (const debut of times) {
+    if (!debut.includes('debut')) continue;
+    const fin = debut.replace('debut', 'fin');
+    const a = values[debut];
+    const b = values[fin];
+    if (times.has(fin) && TIME_RE.test(a || '') && TIME_RE.test(b || '') && a >= b) {
+      out.push({ nom: fin, message: `« {{${fin}}} » (${b}) doit être après « {{${debut}}} » (${a}).` });
+    }
+  }
+  return out;
+}
+
+/** Valeur telle qu'elle apparaît dans l'email : 2026-10-20 → « 20 octobre 2026 » ; le reste tel quel. */
+function displayValue(type, v) {
+  if (type === 'date' && isRealDate(v)) {
+    return new Date(`${v}T00:00:00Z`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+  }
+  return v;
+}
+
+/** Toutes les valeurs mises en forme pour l'email (utile aussi pour les balises du modèle de facture). */
+export function displayValues(t, values) {
+  const typeOf = new Map(t.balises.map((b) => [b.nom, b.type]));
+  return Object.fromEntries(Object.entries(values).map(([k, v]) => [k, displayValue(typeOf.get(k), v)]));
 }
 
 /**
@@ -134,16 +201,22 @@ export function valueProblem(balise, value) {
  * Renvoie aussi une version texte (pour les messageries qui n'affichent pas le HTML).
  * subjectOverride : objet personnalisé (saisi dans l'interface), avec balises {{…}} acceptées ;
  * s'il est vide, c'est la balise <title> du modèle qui sert d'objet.
+ * { strict: true } (envoi réel) : une balise restée sans valeur est retirée au lieu de rester visible,
+ * pour qu'un « {{…}} » n'arrive jamais chez le client (l'envoi exige déjà toutes les balises du modèle :
+ * ce filet ne sert que pour une balise tapée dans l'objet personnalisé qui n'existe pas dans le modèle).
+ * Les dates {{date:…}} sont écrites en toutes lettres (« 20 octobre 2026 »).
  */
-export function fillModele(t, values, subjectOverride) {
-  const get = (n) => values[n.toLowerCase()];
-  const html = t.html.replace(COMMENT_RE, '').replace(TAG_RE, (all, n) => {
+export function fillModele(t, values, subjectOverride, { strict = false } = {}) {
+  const shown = displayValues(t, values);
+  const get = (n) => shown[n.toLowerCase()];
+  const html = t.html.replace(COMMENT_RE, '').replace(TAG_RE, (all, _prefix, n) => {
     const v = get(n);
-    if (v === undefined || v === '') return all;
+    if (v === undefined || v === '') return strict ? '' : all;
     return isMultiline(n.toLowerCase()) ? escHtml(v).replace(/\r?\n/g, '<br>') : escHtml(v);
   });
   const subjectSrc = (typeof subjectOverride === 'string' && subjectOverride.trim()) ? subjectOverride : t.objet;
-  const subject = subjectSrc.replace(TAG_RE, (all, n) => (get(n) ? get(n).replace(/\s+/g, ' ') : all)).trim();
+  const subject = subjectSrc.replace(TAG_RE, (all, _prefix, n) => (get(n) ? get(n).replace(/\s+/g, ' ') : (strict ? '' : all)))
+    .replace(/\s+/g, ' ').trim();
   const text = decode(html.replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, '').replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<a\b[^>]*href=["'](https?:[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => `${label} (${href})`)
     .replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|h\d|li)>/gi, '\n')

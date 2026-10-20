@@ -39,7 +39,7 @@ Sans configuration, l'interface est en **mode test** : rien ne part, chaque emai
 Pour envoyer pour de vrai : copier `.env.example` en `.env` et remplir la partie Zoho.
 
 ```bash
-npm test             # 39 vérifications de bout en bout (base temporaire, rien n'est envoyé)
+npm test             # 80 vérifications de bout en bout (base temporaire, rien n'est envoyé)
 npm run create-user  # créer un vrai compte (options : --list, --password, --reset-2fa, --delete)
 ```
 
@@ -53,10 +53,17 @@ démarrage (dossier `modeles-defaut/`) : **Test d'envoi**, **Bienvenue — accè
 | `<meta name="modele" content="…">` | Nom dans la liste |
 | `<meta name="description" content="…">` | Description sous le nom |
 | `{{prenom}}`, `{{date_fin}}`… | Balises : une case à remplir apparaît pour chacune (lettres, chiffres, `_`) |
+| `{{date:date_recup}}` | Case **date** + bouton « Auj. » ; écrite « 20 octobre 2026 » dans l'email |
+| `{{time:heure_debut}}` | Case **heure**, entre 08:00 et 20:00 ; `heure_debut` doit précéder `heure_fin` |
+| `{{adresse:lieu_recup}}` | Case **adresse** avec suggestions (API Base Adresse Nationale) ; remplit aussi `{{code_postal}}` et `{{ville}}` (ou `{{code_postal_lieu_recup}}` / `{{ville_lieu_recup}}`) |
 | `href="{{lien_paiement}}"` | Balise dans un lien → adresse `https://` exigée |
 | `{{message…}}`, `{{texte…}}` | Texte sur plusieurs lignes (retours à la ligne conservés) |
 | `{{email}}`, `{{date_du_jour}}` | Remplies toutes seules (adresse du destinataire, date du jour), modifiables |
 | `<img src="cid:logo">` | Logo du chat, **joint à l'email** (aucun hébergement d'image nécessaire) |
+
+Le préfixe `type:` est facultatif (espaces tolérés : `{{ date : date_recup }}`) ; sans préfixe, la balise reste un texte
+comme avant. `{{date:date_recup}}` et `{{date_recup}}` désignent la même valeur. Libellés des cases :
+`public/js/views/balise-labels.js`.
 
 L'exemple commenté se télécharge depuis l'onglet Modèles (`src/modele-exemple.html`). Les commentaires `<!-- … -->`
 sont retirés à l'envoi (sauf ceux pour Outlook `<!--[if mso]>`). Images autres que le logo : adresse `https://…`.

@@ -24,7 +24,9 @@ export function securityHeaders() {
         styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
         imgSrc: ["'self'", 'data:', 'https:'],
         fontSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'"],
+        // + API Base Adresse Nationale (suggestions des champs {{adresse:…}}), appelée depuis le navigateur ;
+        //   data.geopf.fr = son nouvel hébergement (IGN Géoplateforme), au cas où l'ancienne adresse y redirige.
+        connectSrc: ["'self'", 'https://api-adresse.data.gouv.fr', 'https://data.geopf.fr'],
         frameSrc: ["'self'"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],

@@ -17,7 +17,7 @@ import { findById } from '../users.js';
 import { requireAuth, limits } from '../security.js';
 import { sendMail, mailMode, fromAddress } from '../mailer.js';
 import {
-  listModeles, readModele, saveModele, deleteModele, fillModele, valueProblem,
+  listModeles, readModele, saveModele, deleteModele, fillModele, valueProblem, crossProblems, displayValues,
   inlineAttachments, previewImages, validSlug, EXAMPLE_FILE, MAX_SIZE, MAX_MODELES,
 } from '../modeles.js';
 import {
@@ -179,17 +179,20 @@ export function mailRouter() {
       const problem = valueProblem(b, vars[b.nom]);
       if (problem) throw fieldError(`var_${b.nom}`, problem);
     }
+    // Heure de début avant heure de fin (heure_debut / heure_fin…)
+    const cross = crossProblems(t.balises.filter((b) => !auto.includes(b.nom)), vars)[0];
+    if (cross) throw fieldError(`var_${cross.nom}`, cross.message);
     const factureData = t.facture ? factureInput({ ...body, prenom: vars.prenom }) : null; // lève si montant manquant
 
     const user = findById(req.session.userId);
     // Modèle facture : on crée la facture (id de lien non devinable), puis on remplit {{lien_facture}} & co.
     let facture = null;
     if (t.facture) {
-      const mailVars = { ...vars }; // balises du mail déjà remplies (prenom…), pour le modèle de facture
+      const mailVars = displayValues(t, vars); // balises du mail déjà remplies (prenom…), mises en forme, pour le modèle de facture
       facture = createFacture(factureData, { client_email: to, user, modele: getActiveFactureSlug(), vars: mailVars });
       Object.assign(vars, factureVars(facture, facture.id));
     }
-    const m = fillModele(t, vars, subjectOf(body));
+    const m = fillModele(t, vars, subjectOf(body), { strict: true }); // aucune balise vide ne part chez le client
     if (!m.subject) { if (facture) deleteFacture(facture.id); throw fieldError('subject', 'Indiquez l\'objet de l\'email (ou ajoutez une balise <title> au modèle).'); }
 
     const result = await sendMail({ to, subject: m.subject, html: m.html, text: m.text, attachments: inlineAttachments(m.html) });

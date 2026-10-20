@@ -3,25 +3,36 @@
  *  - les valeurs saisies sont gardées quand on change de modèle (même nom de balise = même valeur) ;
  *  - {{email}} est rempli avec l'adresse du destinataire, {{date_du_jour}} avec la date du jour ;
  *  - l'aperçu est demandé au serveur (même remplissage qu'à l'envoi) ; les balises vides restent visibles.
+ *  - une case par balise, générée d'après le modèle (le serveur scanne le HTML, voir src/modeles.js) ;
+ *    son type vient du préfixe facultatif {{type:nom}} :
+ *      {{date:…}} → calendrier + bouton « Auj. »,  {{time:…}} → heure entre 08:00 et 20:00
+ *      (et heure_debut < heure_fin),  {{adresse:…}} → suggestions d'adresses (voir adresse.js),
+ *      sans préfixe → texte (ou lien / texte multiligne, comme avant) ;
+ *  - libellés des cases : balise-labels.js.
  */
 import { A } from '../api.js';
 import { $, $$, esc, debounce, toast, modal, confirmBox, ICON, fdateLong } from '../ui.js';
 import { gsap, reduced, tilt } from '../fx/motion.js';
+import { labelOf } from './balise-labels.js';
+import { attachAdresse, adresseField } from './adresse.js';
 
 const EMAIL_RE = /^[^\s@<>,;"'()]+@[^\s@<>,;"'()]+\.[a-z]{2,}$/i;
 const LINK_RE = /^(https:\/\/|mailto:)\S+$/i;
 // Balises d'un modèle « facture » remplies par l'encadré Facture (pas demandées comme simples cases).
 const FACTURE_TAGS = ['lien_facture', 'numero_facture', 'montant', 'date_paiement', 'heure', 'lieu', 'description', 'client_nom'];
 const todayISO = () => new Date().toLocaleDateString('sv-SE'); // AAAA-MM-JJ (heure locale)
-
-/** « date_fin » → « Date fin » */
-const human = (n) => n.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+// Plage des heures : envoyée par le serveur avec chaque balise « time » (b.min / b.max) ; valeurs de secours :
+const TIME_MIN = '08:00';
+const TIME_MAX = '20:00';
 
 /** Exemple affiché dans une case, d'après le nom de la balise. */
 function placeholderFor(b) {
   const n = b.nom;
   if (b.type === 'lien') return 'https://…';
   if (b.type === 'texte') return 'Ton message… (les retours à la ligne sont conservés)';
+  if (b.type === 'adresse') return 'Ex. 8 boulevard du Port, Amiens';
   if (/prenom/.test(n)) return 'Ex. Alex';
   if (/^nom/.test(n)) return 'Ex. Martin';
   if (/date/.test(n)) return `Ex. ${fdateLong(new Date(Date.now() + 30 * 864e5))}`;
@@ -30,7 +41,20 @@ function placeholderFor(b) {
   return '';
 }
 
-const valid = (b, v) => Boolean(v) && (b.type !== 'lien' || LINK_RE.test(v));
+/** Problème d'une valeur selon le type de sa balise (null = valeur correcte). Même règles que le serveur. */
+function problemOf(b, v) {
+  if (!v) return 'à remplir';
+  if (b.type === 'lien' && !LINK_RE.test(v)) return 'adresse https:// attendue';
+  if (b.type === 'date' && !ISO_DATE_RE.test(v)) return 'date invalide';
+  if (b.type === 'time') {
+    if (!TIME_RE.test(v)) return 'heure invalide';
+    const min = b.min || TIME_MIN;
+    const max = b.max || TIME_MAX;
+    if (v < min || v > max) return `entre ${min} et ${max}`; // HH:MM : la comparaison de textes suffit
+  }
+  return null;
+}
+const valid = (b, v) => !problemOf(b, v);
 
 /** Aperçu : les liens s'ouvrent dans un nouvel onglet. */
 export const withBase = (html) => (/<head[^>]*>/i.test(html) ? html.replace(/<head([^>]*)>/i, '<head$1><base target="_blank">') : `<base target="_blank">${html}`);
@@ -53,6 +77,24 @@ export function createCompose(root, { fx, getStatus, onSent }) {
   const values = {};           // valeurs saisies, gardées d'un modèle à l'autre
   const fvalues = {};          // champs de l'encadré Facture (f_montant, f_date, f_heure, f_lieu, f_client, f_description)
   const isManaged = (nom) => Boolean(current?.facture) && FACTURE_TAGS.includes(nom);
+  const hasTag = (nom) => Boolean(current?.balises.some((b) => b.nom === nom && !isManaged(nom)));
+
+  /**
+   * Heure de début avant heure de fin : heure_debut / heure_fin (et toute paire …debut… / …fin…).
+   * Renvoie [{ nom: balise de fin, debut: balise de début }].
+   */
+  function crossProblems() {
+    const times = new Set((current?.balises || []).filter((b) => b.type === 'time' && !isManaged(b.nom)).map((b) => b.nom));
+    const out = [];
+    for (const debut of times) {
+      if (!debut.includes('debut')) continue;
+      const fin = debut.replace('debut', 'fin');
+      const a = values[debut] || '';
+      const b = values[fin] || '';
+      if (times.has(fin) && TIME_RE.test(a) && TIME_RE.test(b) && a >= b) out.push({ nom: fin, debut });
+    }
+    return out;
+  }
   let emailEdited = false;     // {{email}} modifié à la main : n'est plus recopié depuis le destinataire
   let last = null;             // dernier aperçu reçu du serveur
   let lastHtml = '';
@@ -124,21 +166,44 @@ export function createCompose(root, { fx, getStatus, onSent }) {
       markDone();
       return;
     }
-    // Valeurs automatiques (modifiables)
-    if (values.date_du_jour === undefined) values.date_du_jour = fdateLong();
+    // Valeurs automatiques (modifiables). {{date_du_jour}} : AAAA-MM-JJ pour une case date, en toutes lettres sinon.
+    const dateDuJour = list.find((b) => b.nom === 'date_du_jour');
+    if (dateDuJour?.type === 'date') { if (!ISO_DATE_RE.test(values.date_du_jour || '')) values.date_du_jour = todayISO(); }
+    else if (values.date_du_jour === undefined || ISO_DATE_RE.test(values.date_du_jour)) values.date_du_jour = fdateLong();
     if (!emailEdited) values.email = toInput.value.trim();
 
     varsEl.innerHTML = list.map((b) => {
       const id = `v-${b.nom}`;
+      const value = values[b.nom] || '';
       const common = `id="${id}" data-var="${esc(b.nom)}" placeholder="${esc(placeholderFor(b))}" maxlength="${b.type === 'texte' ? 2000 : 500}"`;
-      const input = b.type === 'texte'
-        ? `<textarea class="input" rows="5" ${common}>${esc(values[b.nom] || '')}</textarea>`
-        : `<div class="input-icon"><span data-icon>${b.type === 'lien' ? ICON.link : ICON.sparkle}</span>
-            <input class="input" type="${b.type === 'lien' ? 'url' : 'text'}" ${common} value="${esc(values[b.nom] || '')}" autocomplete="off" spellcheck="${b.type === 'ligne'}"></div>`;
+      const plain = `id="${id}" data-var="${esc(b.nom)}"`; // date / heure : le navigateur affiche son propre sélecteur
+      let input;
+      let hint = '';
+      if (b.type === 'texte') {
+        input = `<textarea class="input" rows="5" ${common}>${esc(value)}</textarea>`;
+      } else if (b.type === 'date') {
+        input = `<div class="input-row">
+            <input class="input" type="date" ${plain} value="${esc(value)}">
+            <button type="button" class="btn btn--ghost btn--sm" data-today="${esc(b.nom)}" title="Date du jour">Auj.</button>
+          </div>`;
+      } else if (b.type === 'time') {
+        const min = b.min || TIME_MIN;
+        const max = b.max || TIME_MAX;
+        input = `<input class="input" type="time" ${plain} min="${esc(min)}" max="${esc(max)}" step="60" value="${esc(value)}">`;
+        hint = `<span class="hint" data-var-hint>Entre ${esc(min)} et ${esc(max)}</span>`;
+      } else if (b.type === 'adresse') {
+        input = `<div class="input-icon"><span data-icon>${ICON.search}</span>${adresseField(b.nom, common, value)}</div>`;
+        const fills = [`code_postal_${b.nom}`, 'code_postal', `ville_${b.nom}`, 'ville'].filter(hasTag);
+        hint = `<span class="hint">Tape 3 lettres puis choisis une suggestion${fills.length ? ` (remplit aussi ${fills.map((n) => `{{${esc(n)}}}`).join(', ')})` : ''}</span>`;
+      } else {
+        input = `<div class="input-icon"><span data-icon>${b.type === 'lien' ? ICON.link : ICON.sparkle}</span>
+            <input class="input" type="${b.type === 'lien' ? 'url' : 'text'}" ${common} value="${esc(value)}" autocomplete="off" spellcheck="${b.type === 'ligne'}"></div>`;
+        if (b.type === 'lien') hint = '<span class="hint">Adresse complète, commençant par https://</span>';
+      }
       return `<div class="field${b.type === 'texte' ? ' field--wide' : ''}" data-var-field="${esc(b.nom)}">
-        <label class="var-label" for="${id}"><span>${esc(human(b.nom))}</span><span class="tag">{{${esc(b.nom)}}}</span></label>
+        <label class="var-label" for="${id}"><span>${esc(labelOf(b.nom))}</span><span class="tag">{{${esc(b.nom)}}}</span></label>
         ${input}
-        ${b.type === 'lien' ? '<span class="hint">Adresse complète, commençant par https://</span>' : ''}
+        ${hint}
       </div>`;
     }).join('');
     markDone();
@@ -146,11 +211,21 @@ export function createCompose(root, { fx, getStatus, onSent }) {
   }
 
   function markDone() {
+    const cross = crossProblems();
     for (const b of current?.balises || []) {
       if (isManaged(b.nom)) continue;
       const f = $(`[data-var-field="${CSS.escape(b.nom)}"]`, varsEl);
-      f?.classList.toggle('is-done', valid(b, values[b.nom]));
-      f?.classList.remove('is-invalid');
+      const c = cross.find((x) => x.nom === b.nom);
+      f?.classList.toggle('is-done', valid(b, values[b.nom]) && !c);
+      f?.classList.toggle('is-invalid', Boolean(c)); // heure de fin avant le début : signalé tout de suite
+      // Heures : la remarque sous la case dit ce qui ne va pas (plage, ordre début / fin)
+      const hint = b.type === 'time' && f ? $('[data-var-hint]', f) : null;
+      if (hint) {
+        const p = values[b.nom] ? problemOf(b, values[b.nom]) : null;
+        hint.textContent = c ? `Doit être après ${labelOf(c.debut).toLowerCase()}` : p ? `Heure ${p}` : `Entre ${b.min || TIME_MIN} et ${b.max || TIME_MAX}`;
+        hint.classList.toggle('hint--err', Boolean(c || p));
+        if (p) f.classList.add('is-invalid');
+      }
     }
     if (current?.facture) {
       const mf = $('[data-f-field="montant"]', factureEl);
@@ -171,7 +246,12 @@ export function createCompose(root, { fx, getStatus, onSent }) {
     if (!EMAIL_RE.test(toInput.value.trim())) out.push('l\'adresse du destinataire');
     const subj = subjectTouched ? subjectInput.value.trim() : (current?.objet || '').trim();
     if (current && !subj) out.push('l\'objet de l\'email');
-    for (const b of current?.balises || []) { if (isManaged(b.nom)) continue; if (!valid(b, values[b.nom])) out.push(`{{${b.nom}}}`); }
+    for (const b of current?.balises || []) {
+      if (isManaged(b.nom)) continue;
+      const p = problemOf(b, values[b.nom]);
+      if (p) out.push(values[b.nom] ? `{{${b.nom}}} (${p})` : `{{${b.nom}}}`);
+    }
+    for (const c of crossProblems()) out.push(`{{${c.nom}}} après {{${c.debut}}}`);
     if (current?.facture && !String(fvalues.f_montant || '').trim()) out.push('le montant de la facture');
     return out;
   }
@@ -235,6 +315,34 @@ export function createCompose(root, { fx, getStatus, onSent }) {
     markDone();
     refreshSoon();
   });
+  // Bouton « Auj. » des champs date
+  varsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-today]');
+    if (!btn) return;
+    const name = btn.dataset.today;
+    const input = $(`[data-var="${CSS.escape(name)}"]`, varsEl);
+    values[name] = todayISO();
+    if (input) input.value = values[name];
+    markDone();
+    refreshSoon();
+  });
+
+  // Champs adresse : une suggestion choisie remplit le champ, et {{code_postal}} / {{ville}} s'ils existent.
+  // Avec plusieurs adresses, {{code_postal_<balise>}} / {{ville_<balise>}} (ex. {{ville_lieu_recup}}) sont prioritaires.
+  attachAdresse(varsEl, {
+    onPick(name, { label, postcode, city }) {
+      values[name] = label;
+      for (const [key, val] of [['code_postal', postcode], ['ville', city]]) {
+        const target = hasTag(`${key}_${name}`) ? `${key}_${name}` : key;
+        values[target] = val; // gardé même sans balise : resservira si un autre modèle en a une
+        const el = $(`[data-var="${CSS.escape(target)}"]`, varsEl);
+        if (el) el.value = val;
+      }
+      markDone();
+      refreshSoon();
+    },
+  });
+
   factureEl.addEventListener('input', (e) => {
     const f = e.target.dataset.f;
     if (!f) return;
@@ -298,6 +406,7 @@ export function createCompose(root, { fx, getStatus, onSent }) {
       if (isManaged(b.nom)) continue;
       if (!valid(b, values[b.nom])) $(`[data-var-field="${CSS.escape(b.nom)}"]`, varsEl)?.classList.add('is-invalid');
     }
+    for (const c of crossProblems()) $(`[data-var-field="${CSS.escape(c.nom)}"]`, varsEl)?.classList.add('is-invalid');
     if (current?.facture && !String(fvalues.f_montant || '').trim()) $('[data-f-field="montant"]', factureEl)?.classList.add('is-invalid');
     if (!reduced) gsap.fromTo('.sendbar', { x: 0 }, { keyframes: { x: [-10, 9, -6, 4, 0] }, duration: 0.5 });
     const first = $('.is-invalid .input', root);
@@ -309,7 +418,7 @@ export function createCompose(root, { fx, getStatus, onSent }) {
     const p = problems();
     if (p.length) {
       flagProblems();
-      toast(`À compléter : ${p.join(', ')}`, 'err');
+      toast(`À compléter ou corriger : ${p.join(', ')}`, 'err');
       return;
     }
     await refresh();
