@@ -2,7 +2,7 @@
  * Test de bout en bout :  npm test
  * Lance une copie du serveur sur une base temporaire (la base de développement n'est pas touchée),
  * en mode test (aucun email ne part), et vérifie : pages protégées, CSRF, connexion, modèles,
- * aperçu, envoi, protections des balises, import / suppression de modèle, historique, déconnexion.
+ * aperçu, envoi, protections des balises, import / suppression de modèle, historique (et suppression), déconnexion.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -172,6 +172,14 @@ try {
   check(hist.length === 3 && hist[0].statut === 'test' && hist[0].par === 'Équipe', 'envois notés dans l\'historique');
   const stats = (await call('GET', '/api/stats')).data;
   check(stats.aujourdhui === 3 && stats.total === 3 && stats.parJour.length === 14, 'statistiques à jour');
+  check((await call('DELETE', '/api/historique', { ids: [] })).status === 400, 'suppression sans ligne choisie refusée');
+  check((await call('DELETE', '/api/historique', { ids: ['1 OR 1=1'] })).status === 400, 'identifiants invalides ignorés');
+  const delH = await call('DELETE', '/api/historique', { ids: [hist[0].id, hist[0].id, 999999] });
+  check(delH.status === 200 && delH.data.supprimes === 1, 'ligne choisie supprimée de l\'historique (doublons / inconnus ignorés)');
+  const hist2 = (await call('GET', '/api/historique')).data;
+  check(hist2.length === 2 && !hist2.some((r) => r.id === hist[0].id), 'historique à jour après suppression');
+  check((await call('GET', '/api/stats')).data.total === 2, 'statistiques à jour après suppression');
+  check((await fetch(`${BASE}/api/facture/${fid}`)).status === 200, 'les factures ne sont pas touchées');
 
   console.log('\nModèles de factures (designs de la page facture)');
   const fm = (await call('GET', '/api/factures/modeles')).data;

@@ -51,6 +51,7 @@ export const A = {
   apercu: (p) => http('POST', '/apercu', p),
   envoi: (p) => http('POST', '/envoi', p),
   historique: () => http('GET', '/historique'),
+  deleteHistorique: (ids) => http('DELETE', '/historique', { ids }),
 
   // Modèles de factures (designs de la page facture)
   factureModeles: () => http('GET', '/factures/modeles'),

@@ -205,13 +205,27 @@
         <div class="hero__text">
           <p class="eyebrow" data-reveal>Journal</p>
           <h1 class="display hero__title" data-split>Historique des <span class="grad-text">envois</span></h1>
-          <p class="lead" data-reveal>Les 300 derniers emails : qui les a envoyés, à qui, avec quel modèle.</p>
+          <p class="lead" data-reveal>Les 300 derniers emails : qui les a envoyés, à qui, avec quel modèle. Coche des lignes pour les supprimer.</p>
         </div>
         <div class="hero__actions" data-reveal>
           <div class="input-icon search"><span data-icon="search"></span><input class="input" type="search" placeholder="Rechercher une adresse, un objet…" data-search aria-label="Rechercher"></div>
         </div>
       </div>
       <div class="panel glass table-panel" data-reveal>
+        <div class="hbar" data-hbar hidden>
+          <div class="hbar__pick" role="group" aria-label="Sélection rapide">
+            <span class="hbar__label">Sélectionner</span>
+            <button class="btn btn--ghost btn--sm" type="button" data-hpick="tout">Tout</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-hpick="echec">Échecs</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-hpick="test">Mode test</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-hpick="ancien">Plus de 30 jours</button>
+            <button class="btn btn--ghost btn--sm" type="button" data-hpick="aucun">Aucun</button>
+          </div>
+          <div class="hbar__act">
+            <span class="hbar__count" data-hcount aria-live="polite"></span>
+            <button class="btn btn--danger btn--sm" type="button" data-hdel disabled></button>
+          </div>
+        </div>
         <div class="table-scroll"><table class="t" data-history></table></div>
       </div>
     </section>

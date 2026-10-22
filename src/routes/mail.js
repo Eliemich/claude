@@ -8,6 +8,7 @@
  *  POST /apercu                      { modele, to, vars } → email rempli (les balises vides restent visibles)
  *  POST /envoi                       { modele, to, vars } → envoi (toutes les balises sont obligatoires)
  *  GET  /historique                  300 derniers envois
+ *  DELETE /historique                { ids } → supprime ces lignes de l'historique (les factures restent)
  */
 import { Router } from 'express';
 import { db, now } from '../db.js';
@@ -204,6 +205,17 @@ export function mailRouter() {
   r.get('/historique', (_req, res) => {
     res.json(db.prepare(`SELECT id, created_at AS date, user_nom AS par, destinataire, modele, objet, statut, erreur
       FROM envois ORDER BY id DESC LIMIT 300`).all());
+  });
+
+  r.delete('/historique', (req, res) => {
+    const raw = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    const ids = [...new Set(raw.filter((id) => Number.isSafeInteger(id) && id > 0))];
+    if (!ids.length) throw badRequest('Choisissez au moins une ligne à supprimer.');
+    if (ids.length > 1000) throw badRequest('1000 lignes maximum à la fois.');
+    const del = db.prepare('DELETE FROM envois WHERE id = ?');
+    const supprimes = db.transaction(() => ids.reduce((n, id) => n + del.run(id).changes, 0))();
+    console.log(`[historique] ${supprimes} ligne(s) supprimée(s) (compte ${req.session.userId})`);
+    res.json({ ok: true, supprimes });
   });
 
   return r;

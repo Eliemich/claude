@@ -9,7 +9,7 @@ connexion (pas de création de compte), modèles `.html` avec balises `{{…}}`,
 | `/connexion` | Connexion (email + mot de passe, double authentification en option) |
 | `/envoi` → **Envoyer** | Choix du modèle, destinataire, balises à remplir, aperçu en direct (ordinateur / téléphone), envoi avec confirmation |
 | `/envoi#modeles` | Bibliothèque : vignettes, import par glisser-déposer, aperçu agrandi, téléchargement, suppression, exemple commenté |
-| `/envoi#historique` | 300 derniers envois (date, destinataire, objet, modèle, auteur, statut), recherche |
+| `/envoi#historique` | 300 derniers envois (date, destinataire, objet, modèle, auteur, statut), recherche, **suppression** : cases à cocher + sélection rapide (tout, échecs, mode test, plus de 30 jours) → « Supprimer » avec confirmation. Les factures et leurs liens ne sont pas touchés. |
 
 **Factures** (servies sur `tradingbara.uk/facture`, sans lien visible vers l'outil) :
 - Un modèle d'email devient « **de type facture** » dès qu'il contient la balise `{{lien_facture}}`. À l'envoi, un encadré
@@ -39,7 +39,7 @@ Sans configuration, l'interface est en **mode test** : rien ne part, chaque emai
 Pour envoyer pour de vrai : copier `.env.example` en `.env` et remplir la partie Zoho.
 
 ```bash
-npm test             # 39 vérifications de bout en bout (base temporaire, rien n'est envoyé)
+npm test             # 74 vérifications de bout en bout (base temporaire, rien n'est envoyé)
 npm run create-user  # créer un vrai compte (options : --list, --password, --reset-2fa, --delete)
 ```
 
