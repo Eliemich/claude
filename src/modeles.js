@@ -10,7 +10,8 @@
  *          {{date:…}} → date (case calendrier, écrite « 20 octobre 2026 » dans l'email),
  *          {{time:…}} → heure entre 08:00 et 20:00, {{adresse:…}} → adresse avec suggestions,
  *          {{code6:…}} → exactement 6 chiffres ({{code5:…}} → 5 chiffres… de 1 à 20),
- *          {{civilite:…}} (ou {{civ:…}}) → choix Homme / Femme, écrit « M. » ou « Mme » ;
+ *          {{civilite:…}} (ou {{civ:…}}) → choix Homme / Femme, écrit « M. » ou « Mme »,
+ *          {{civilitelong:…}} (ou {{civlong:…}}) → même choix, écrit « Monsieur » ou « Madame » ;
  *        le nom de la balise reste « nom » : {{date:date_recup}} et {{date_recup}} désignent la même valeur ;
  *      · balise placée dans un lien (href="{{…}}") → adresse https:// obligatoire ;
  *      · balise nommée message… ou texte… → texte sur plusieurs lignes (retours à la ligne conservés) ;
@@ -31,9 +32,16 @@ export const MAX_MODELES = 100;
 // {{nom}} ou {{type:nom}} — espaces tolérés partout : {{ date : date_recup }}. Groupes : 1 = type (facultatif), 2 = nom.
 const TAG_RE = /\{\{\s*(?:(\p{L}[\p{L}\p{N}]{0,14})\s*:\s*)?([\p{L}\p{N}_]{1,30})\s*\}\}/gu;
 // Préfixes reconnus → type de champ. Un préfixe inconnu ({{abc:nom}}) donne un simple texte.
-const PREFIX_TYPES = { date: 'date', time: 'time', heure: 'time', adresse: 'adresse', civilite: 'civilite', civ: 'civilite' };
-// {{civilite:…}} : valeurs possibles (choisies à l'envoi, insérées telles quelles dans l'email)
-export const CIVILITES = [{ valeur: 'M.', label: 'Homme' }, { valeur: 'Mme', label: 'Femme' }];
+const PREFIX_TYPES = {
+  date: 'date', time: 'time', heure: 'time', adresse: 'adresse',
+  civilite: 'civilite', civ: 'civilite', civilitelong: 'civilite', civlong: 'civilite',
+};
+// {{civilite:…}} : valeurs possibles (choisies à l'envoi). valeur = forme courte insérée dans l'email,
+// long = forme écrite par {{civilitelong:…}}. Un seul choix sert aux deux formes (même nom de balise).
+export const CIVILITES = [{ valeur: 'M.', long: 'Monsieur', label: 'Homme' }, { valeur: 'Mme', long: 'Madame', label: 'Femme' }];
+const LONG_PREFIXES = new Set(['civilitelong', 'civlong']);
+/** {{civilitelong:…}} : « M. » → « Monsieur », « Mme » → « Madame » ; toute autre balise inchangée. */
+const formFor = (prefix, v) => (LONG_PREFIXES.has(prefix?.toLowerCase()) ? CIVILITES.find((c) => c.valeur === v)?.long ?? v : v);
 export const CODE_MAX = 20; // {{code1:…}} à {{code20:…}}
 
 /** Préfixe → { type, longueur? } ou null. {{code6:…}} → code de 6 chiffres exactement. */
@@ -227,13 +235,13 @@ export function displayValues(t, values) {
 export function fillModele(t, values, subjectOverride, { strict = false } = {}) {
   const shown = displayValues(t, values);
   const get = (n) => shown[n.toLowerCase()];
-  const html = t.html.replace(COMMENT_RE, '').replace(TAG_RE, (all, _prefix, n) => {
-    const v = get(n);
+  const html = t.html.replace(COMMENT_RE, '').replace(TAG_RE, (all, prefix, n) => {
+    const v = formFor(prefix, get(n));
     if (v === undefined || v === '') return strict ? '' : all;
     return isMultiline(n.toLowerCase()) ? escHtml(v).replace(/\r?\n/g, '<br>') : escHtml(v);
   });
   const subjectSrc = (typeof subjectOverride === 'string' && subjectOverride.trim()) ? subjectOverride : t.objet;
-  const subject = subjectSrc.replace(TAG_RE, (all, _prefix, n) => (get(n) ? get(n).replace(/\s+/g, ' ') : (strict ? '' : all)))
+  const subject = subjectSrc.replace(TAG_RE, (all, prefix, n) => (get(n) ? formFor(prefix, get(n)).replace(/\s+/g, ' ') : (strict ? '' : all)))
     .replace(/\s+/g, ' ').trim();
   const text = decode(html.replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, '').replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<a\b[^>]*href=["'](https?:[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => `${label} (${href})`)

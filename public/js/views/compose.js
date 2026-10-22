@@ -8,7 +8,8 @@
  *      {{date:…}} → calendrier + bouton « Auj. »,  {{time:…}} → heure entre 08:00 et 20:00
  *      (et heure_debut < heure_fin),  {{adresse:…}} → suggestions d'adresses (voir adresse.js),
  *      {{code6:…}} → exactement 6 chiffres (codeN : N chiffres),
- *      {{civilite:…}} → boutons Homme / Femme (« M. » / « Mme » dans l'email),
+ *      {{civilite:…}} → boutons Homme / Femme (« M. » / « Mme » dans l'email, « Monsieur » / « Madame »
+ *      avec {{civilitelong:…}} : un seul choix pour les deux formes),
  *      sans préfixe → texte (ou lien / texte multiligne, comme avant) ;
  *  - libellés des cases : balise-labels.js.
  */

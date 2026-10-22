@@ -133,7 +133,7 @@ try {
   console.log('\nBalises typées {{type:nom}}');
   const suivi = '<!DOCTYPE html><html><head><meta name="modele" content="Suivi"><title>Commande {{numero}} du {{ date : date_recup }}</title></head><body>'
     + '<p>{{coursier}} passe le {{date:date_recup}} entre {{time:heure_debut}} et {{ time:heure_fin }}, {{adresse:lieu_recup}} ({{code_postal}} {{ville}}).</p>'
-    + '<p>Rappel : {{date_recup}}, {{ inconnu:remarque }}, code {{code6:code_retrait}}, porte {{ code5 : code_porte }}, {{code99:ref}}, {{civilite:civ_client}} {{civ:civ_client}}</p></body></html>';
+    + '<p>Rappel : {{date_recup}}, {{ inconnu:remarque }}, code {{code6:code_retrait}}, porte {{ code5 : code_porte }}, {{code99:ref}}, {{civilite:civ_client}} {{civ:civ_client}} {{ civilitelong : civ_client }}</p></body></html>';
   const ts = await call('POST', '/api/modeles', { fichier: 'suivi.html', html: suivi });
   const types = Object.fromEntries((ts.data.balises || []).map((b) => [b.nom, b.type]));
   check(ts.status === 201 && Object.keys(types).join() === 'numero,date_recup,coursier,heure_debut,heure_fin,lieu_recup,code_postal,ville,remarque,code_retrait,code_porte,ref,civ_client', 'balises uniques, nom sans préfixe');
@@ -153,13 +153,15 @@ try {
   check((await sendSuivi({ ...sv, code_retrait: '12345' })).data.fields?.var_code_retrait, 'code à 5 chiffres refusé pour {{code6:…}}');
   check((await sendSuivi({ ...sv, code_porte: '12a45' })).data.fields?.var_code_porte, 'code avec une lettre refusé');
   check((await sendSuivi({ ...sv, civ_client: 'Madame' })).data.fields?.var_civ_client, 'civilité hors M. / Mme refusée');
+  const civAp = (await call('POST', '/api/apercu', { modele: 'suivi', to: 'cli@example.com', vars: { ...sv, civ_client: 'M.' } })).data;
+  check(civAp.html.includes('M. M. Monsieur') && civAp.missing.length === 0, '{{civilitelong:…}} → Monsieur (même choix, une seule case)');
   const svAp = (await call('POST', '/api/apercu', { modele: 'suivi', to: 'cli@example.com', vars: sv })).data;
   check(svAp.subject === 'Commande A12 du 20 octobre 2026' && svAp.html.split('20 octobre 2026').length === 4, 'date écrite en toutes lettres (objet, <title> et 2 balises)');
   const before = new Set(fs.readdirSync(path.join(DATA, 'outbox')));
   const okSuivi = await sendSuivi(sv, { subject: 'Commande {{numero}} {{pas_dans_le_modele}}' });
   const newFile = fs.readdirSync(path.join(DATA, 'outbox')).find((f) => !before.has(f));
   const svMail = newFile ? fs.readFileSync(path.join(DATA, 'outbox', newFile), 'utf8') : '';
-  check(okSuivi.status === 200 && svMail.includes('entre 09:00 et 11:30') && svMail.includes('(80000 Amiens)') && svMail.includes('code 048213') && svMail.includes('Mme Mme'), 'envoi : balises typées remplacées');
+  check(okSuivi.status === 200 && svMail.includes('entre 09:00 et 11:30') && svMail.includes('(80000 Amiens)') && svMail.includes('code 048213') && svMail.includes('Mme Mme Madame'), 'envoi : balises typées remplacées');
   check(!svMail.includes('{{'), 'aucune balise vide n\'arrive chez le client');
   check((await call('DELETE', '/api/modeles/suivi')).status === 200, 'modèle typé supprimé');
 
