@@ -39,7 +39,7 @@ Sans configuration, l'interface est en **mode test** : rien ne part, chaque emai
 Pour envoyer pour de vrai : copier `.env.example` en `.env` et remplir la partie Zoho.
 
 ```bash
-npm test             # 84 vérifications de bout en bout (base temporaire, rien n'est envoyé)
+npm test             # 86 vérifications de bout en bout (base temporaire, rien n'est envoyé)
 npm run create-user  # créer un vrai compte (options : --list, --password, --reset-2fa, --delete)
 ```
 
@@ -56,6 +56,7 @@ démarrage (dossier `modeles-defaut/`) : **Test d'envoi**, **Bienvenue — accè
 | `{{date:date_recup}}` | Case **date** + bouton « Auj. » ; écrite « 20 octobre 2026 » dans l'email |
 | `{{time:heure_debut}}` | Case **heure**, entre 08:00 et 20:00 ; `heure_debut` doit précéder `heure_fin` |
 | `{{code6:code_retrait}}` | Code d'**exactement 6 chiffres** (`code5` → 5 chiffres… de `code1` à `code20`) ; espaces retirés à la saisie |
+| `{{civilite:civ_client}}` (ou `{{civ:…}}`) | Choix **Homme / Femme** à l'envoi → « M. » ou « Mme » dans l'email |
 | `{{adresse:lieu_recup}}` | Case **adresse** avec suggestions (API Base Adresse Nationale) ; remplit aussi `{{code_postal}}` et `{{ville}}` (ou `{{code_postal_lieu_recup}}` / `{{ville_lieu_recup}}`) |
 | `href="{{lien_paiement}}"` | Balise dans un lien → adresse `https://` exigée |
 | `{{message…}}`, `{{texte…}}` | Texte sur plusieurs lignes (retours à la ligne conservés) |

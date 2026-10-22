@@ -9,7 +9,8 @@
  *      · préfixe de type facultatif {{type:nom}} (espaces tolérés : {{ date : date_recup }}) :
  *          {{date:…}} → date (case calendrier, écrite « 20 octobre 2026 » dans l'email),
  *          {{time:…}} → heure entre 08:00 et 20:00, {{adresse:…}} → adresse avec suggestions,
- *          {{code6:…}} → exactement 6 chiffres ({{code5:…}} → 5 chiffres… de 1 à 20) ;
+ *          {{code6:…}} → exactement 6 chiffres ({{code5:…}} → 5 chiffres… de 1 à 20),
+ *          {{civilite:…}} (ou {{civ:…}}) → choix Homme / Femme, écrit « M. » ou « Mme » ;
  *        le nom de la balise reste « nom » : {{date:date_recup}} et {{date_recup}} désignent la même valeur ;
  *      · balise placée dans un lien (href="{{…}}") → adresse https:// obligatoire ;
  *      · balise nommée message… ou texte… → texte sur plusieurs lignes (retours à la ligne conservés) ;
@@ -30,7 +31,9 @@ export const MAX_MODELES = 100;
 // {{nom}} ou {{type:nom}} — espaces tolérés partout : {{ date : date_recup }}. Groupes : 1 = type (facultatif), 2 = nom.
 const TAG_RE = /\{\{\s*(?:(\p{L}[\p{L}\p{N}]{0,14})\s*:\s*)?([\p{L}\p{N}_]{1,30})\s*\}\}/gu;
 // Préfixes reconnus → type de champ. Un préfixe inconnu ({{abc:nom}}) donne un simple texte.
-const PREFIX_TYPES = { date: 'date', time: 'time', heure: 'time', adresse: 'adresse' };
+const PREFIX_TYPES = { date: 'date', time: 'time', heure: 'time', adresse: 'adresse', civilite: 'civilite', civ: 'civilite' };
+// {{civilite:…}} : valeurs possibles (choisies à l'envoi, insérées telles quelles dans l'email)
+export const CIVILITES = [{ valeur: 'M.', label: 'Homme' }, { valeur: 'Mme', label: 'Femme' }];
 export const CODE_MAX = 20; // {{code1:…}} à {{code20:…}}
 
 /** Préfixe → { type, longueur? } ou null. {{code6:…}} → code de 6 chiffres exactement. */
@@ -93,6 +96,7 @@ function describe(slug, html, stat) {
     const type = info?.type || (liens.has(nom) ? 'lien' : isMultiline(nom) ? 'texte' : 'ligne');
     if (type === 'time') return { nom, type, min: TIME_MIN, max: TIME_MAX };
     if (type === 'code') return { nom, type, longueur: info.longueur };
+    if (type === 'civilite') return { nom, type, choix: CIVILITES };
     return { nom, type };
   });
   // Modèle « de type facture » : il contient la balise {{lien_facture}} → une facture est créée à l'envoi,
@@ -165,6 +169,7 @@ export function valueProblem(balise, value) {
   if (!value) return `Remplissez « {{${balise.nom}}} ».`;
   if (balise.type === 'lien' && !/^(https:\/\/|mailto:)\S+$/i.test(value)) return `« {{${balise.nom}}} » doit être une adresse qui commence par https://`;
   if (balise.type === 'date' && !isRealDate(value)) return `« {{${balise.nom}}} » : date invalide.`;
+  if (balise.type === 'civilite' && !CIVILITES.some((c) => c.valeur === value)) return `« {{${balise.nom}}} » : choisissez ${CIVILITES.map((c) => c.valeur).join(' ou ')}.`;
   if (balise.type === 'code' && !new RegExp(`^\\d{${balise.longueur}}$`).test(value)) return `« {{${balise.nom}}} » doit contenir exactement ${balise.longueur} chiffres.`;
   if (balise.type === 'time') {
     if (!TIME_RE.test(value)) return `« {{${balise.nom}}} » : heure invalide (format HH:MM).`;

@@ -112,6 +112,17 @@
 .var-label .tag { font-size: .7rem; letter-spacing: 0; text-transform: none; }
 .field.is-done .input { box-shadow: 0 0 0 1px rgba(54, 227, 166, .32) inset; }
 .field .hint--err { color: #ff8da0; }
+/* {{civilite:…}} : deux boutons M. / Mme */
+.seg { display: flex; gap: 8px; }
+.seg__opt { position: relative; flex: 1; height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 13px;
+  cursor: pointer; color: var(--ink-2); background: rgba(3, 6, 14, .55); box-shadow: 0 0 0 1px var(--line-2) inset; transition: box-shadow .3s, background .3s, color .3s; }
+.seg__opt input { position: absolute; opacity: 0; pointer-events: none; }
+.seg__opt span { font-weight: 650; font-size: .96rem; }
+.seg__opt small { font-size: .76rem; color: var(--muted); }
+.seg__opt:hover { box-shadow: 0 0 0 1px var(--line-3) inset; }
+.seg__opt:has(input:checked) { color: #fff; background: rgba(47, 123, 255, .16); box-shadow: 0 0 0 1px rgba(90, 169, 255, .75) inset; }
+.seg__opt:has(input:focus-visible) { box-shadow: 0 0 0 1px rgba(90, 169, 255, .75) inset, 0 0 0 4px rgba(47, 123, 255, .16); }
+.field.is-invalid .seg__opt { box-shadow: 0 0 0 1px rgba(255, 84, 112, .8) inset; }
 /* {{code6:…}} : chiffres bien espacés, faciles à relire */
 .input--code { font-family: var(--mono); letter-spacing: .3em; }
 /* {{date:…}} : case date + bouton « Auj. » */

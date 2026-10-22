@@ -8,6 +8,7 @@
  *      {{date:…}} → calendrier + bouton « Auj. »,  {{time:…}} → heure entre 08:00 et 20:00
  *      (et heure_debut < heure_fin),  {{adresse:…}} → suggestions d'adresses (voir adresse.js),
  *      {{code6:…}} → exactement 6 chiffres (codeN : N chiffres),
+ *      {{civilite:…}} → boutons Homme / Femme (« M. » / « Mme » dans l'email),
  *      sans préfixe → texte (ou lien / texte multiligne, comme avant) ;
  *  - libellés des cases : balise-labels.js.
  */
@@ -45,6 +46,7 @@ function placeholderFor(b) {
 
 /** Problème d'une valeur selon le type de sa balise (null = valeur correcte). Même règles que le serveur. */
 function problemOf(b, v) {
+  if (b.type === 'civilite') return (b.choix || []).some((c) => c.valeur === v) ? null : 'à choisir';
   if (!v) return 'à remplir';
   if (b.type === 'lien' && !LINK_RE.test(v)) return 'adresse https:// attendue';
   if (b.type === 'date' && !ISO_DATE_RE.test(v)) return 'date invalide';
@@ -194,6 +196,12 @@ export function createCompose(root, { fx, getStatus, onSent }) {
         const max = b.max || TIME_MAX;
         input = `<input class="input" type="time" ${plain} min="${esc(min)}" max="${esc(max)}" step="60" value="${esc(value)}">`;
         hint = `<span class="hint" data-var-hint>Entre ${esc(min)} et ${esc(max)}</span>`;
+      } else if (b.type === 'civilite') {
+        // Deux boutons radio : la valeur choisie (« M. » ou « Mme ») est celle écrite dans l'email
+        input = `<div class="seg" id="${id}" role="radiogroup" aria-label="${esc(labelOf(b.nom))}">${(b.choix || []).map((c) => `
+            <label class="seg__opt"><input type="radio" name="civ-${esc(b.nom)}" data-var="${esc(b.nom)}" value="${esc(c.valeur)}"${value === c.valeur ? ' checked' : ''}>
+              <span>${esc(c.valeur)}</span><small>${esc(c.label)}</small></label>`).join('')}
+          </div>`;
       } else if (b.type === 'code') {
         input = `<div class="input-icon"><span data-icon>${ICON.shield}</span>
             <input class="input input--code" type="text" id="${id}" data-var="${esc(b.nom)}" data-digits="${b.longueur}" inputmode="numeric"

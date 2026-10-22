@@ -9,6 +9,7 @@
 export const LABELS = {
   prenom: 'Prénom',
   nom: 'Nom',
+  civilite: 'Civilité',
   email: 'Email',
   date_du_jour: 'Date du jour',
   date_fin: 'Date de fin',
